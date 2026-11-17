@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Adesão — Protocolos Ambulatoriais (Hematologia & Arritmologia)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- SheetJS (XLSX) para leitura e exportação direta da planilha Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              navy: '#0f172a',
+              blue: '#1e3a8a',
+              orange: '#ea580c',
+              orangeLight: '#f97316',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .glass-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    }
+    .dropzone-active {
+      border-color: #f97316 !important;
+      background-color: #fff7ed !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
+
+  <!-- Top Corporate Header -->
+  <header class="glass-header text-white shadow-lg sticky top-0 z-30 border-b border-blue-900/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        <!-- Brand & Title -->
+        <div class="flex items-start sm:items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-950/50 shrink-0 border border-orange-400/30">
+            <i class="fa-solid fa-Notes-medical fa-file-Waveform text-xl text-white"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-400/30 rounded-full">
+                Protocolos Ambulatoriais
+              </span>
+              <span id="lastUpdatedBadge" class="text-xs text-slate-300 flex items-center gap-1.5">
+                <i class="fa-regular fa-clock text-orange-400"></i>
+                <span id="lastUpdatedText">Base Original Incorporada</span>
+              </span>
+            </div>
+            <h1 class="text-lg sm:text-2xl font-extrabold tracking-tight text-white mt-0.5">
+              Adesão ao Treinamento: Hematologia e Arritmologia
+            </h1>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5 self-start md:self-center">
+          <button onclick="exportCurrentFilteredView()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all shadow-sm active:scale-95">
+            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+            <span>Exportar Visão</span>
+          </button>
+
+          <button onclick="openAdminModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md shadow-orange-950/30 border border-orange-400/30 transition-all active:scale-95">
+            <i id="lockIconHeader" class="fa-solid fa-lock text-xs"></i>
+            <span>Atualizar Planilha</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Quick Specialty Selector & Active Filter Status -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
+          <i class="fa-solid fa-stethoscope mr-1 text-slate-400"></i>Especialidade:
+        </span>
+        <button onclick="setQuickSpecialty('ALL')" id="tabSpecALL" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-900 text-white shadow-sm">
+          Todas (<span id="pillCountAll">82</span>)
+        </button>
+        <button onclick="setQuickSpecialty('HEMATOLOGIA')" id="tabSpecHEMA" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+          <span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>Hematologia (<span id="pillCountHema">72</span>)
+        </button>
+        <button onclick="setQuickSpecialty('ARRITMOLOGIA')" id="tabSpecARRI" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1.5"></span>Arritmologia (<span id="pillCountArri">10</span>)
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
+          <i class="fa-solid fa-circle-check mr-1 text-slate-400"></i>Status Rápido:
+        </span>
+        <button onclick="setQuickStatus('ALL')" id="tabStatusALL" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-blue-900 text-white">
+          Todos
+        </button>
+        <button onclick="setQuickStatus('CONCLUIDO')" id="tabStatusCONC" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
+          Concluídos
+        </button>
+        <button onclick="setQuickStatus('PENDENTE')" id="tabStatusPEND" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">
+          Pendentes
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Cards Grid (5 Cards) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      
+      <!-- Card 1: Total Vínculos / Profissionais -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-20 h-20 bg-slate-100 rounded-full opacity-50 pointer-events-none"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Mapeado</span>
+          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+            <i class="fa-solid fa-user-doctor text-sm"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-baseline gap-2">
+            <h2 id="kpiTotalRecords" class="text-3xl font-extrabold text-slate-900">82</h2>
+            <span class="text-xs font-medium text-slate-500">vínculos</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-users text-slate-400"></i>
+            <span id="kpiUniqueProfs" class="font-semibold text-slate-700">68</span> profissionais únicos
+          </p>
+        </div>
+      </div>
+
+      <!-- Card 2: Treinamentos Concluídos -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-200/90 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-20 h-20 bg-emerald-50 rounded-full opacity-70 pointer-events-none"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Concluídos</span>
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <i class="fa-solid fa-check-double text-sm"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-baseline justify-between">
+            <h2 id="kpiConcluidos" class="text-3xl font-extrabold text-emerald-600">3</h2>
+            <span id="kpiTaxaGlobal" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800">
+              3.7%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
+            <div id="kpiBarGlobal" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 3.7%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Treinamentos Pendentes -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-orange-200/90 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full opacity-70 pointer-events-none"></div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-orange-700">Pendentes</span>
+          <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+            <i class="fa-solid fa-hourglass-half text-sm"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-baseline justify-between">
+            <h2 id="kpiPendentes" class="text-3xl font-extrabold text-orange-600">79</h2>
+            <span id="kpiTaxaPendente" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-orange-100 text-orange-800">
+              96.3%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
+            <div id="kpiBarPendente" class="bg-orange-500 h-full rounded-full transition-all duration-500" style="width: 96.3%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Adesão Hematologia -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>Hematologia
+          </span>
+          <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <i class="fa-solid fa-droplet text-sm"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-baseline justify-between">
+            <div>
+              <span id="kpiHemaConc" class="text-2xl font-extrabold text-slate-900">3</span>
+              <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiHemaTotal">72</span></span>
+            </div>
+            <span id="kpiHemaPerc" class="text-xs font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+              4.2%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
+            <div id="kpiBarHema" class="bg-rose-500 h-full rounded-full transition-all duration-500" style="width: 4.2%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: Adesão Arritmologia -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>Arritmologia
+          </span>
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="fa-solid fa-heart-pulse text-sm"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="flex items-baseline justify-between">
+            <div>
+              <span id="kpiArriConc" class="text-2xl font-extrabold text-slate-900">0</span>
+              <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiArriTotal">10</span></span>
+            </div>
+            <span id="kpiArriPerc" class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+              0.0%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
+            <div id="kpiBarArri" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Multi-Filter Bar -->
+    <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-orange-500"></i>
+          Filtros de Segmentação Analítica
+        </h3>
+        <button onclick="resetAllFilters()" class="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition-colors">
+          <i class="fa-solid fa-rotate-left"></i>
+          Limpar Filtros
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <!-- Search Input -->
+        <div class="lg:col-span-2 relative">
+          <label for="filterSearch" class="block text-[11px] font-semibold text-slate-500 mb-1">Buscar Profissional, Clínica ou Filial</label>
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input
+              type="text"
+              id="filterSearch"
+              oninput="applyFilters()"
+              placeholder="Ex: João Paulo, São Gabriel, Recife..."
+              class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"
+            />
+          </div>
+        </div>
+
+        <!-- UF Select -->
+        <div>
+          <label for="filterUF" class="block text-[11px] font-semibold text-slate-500 mb-1">Estado (UF)</label>
+          <select id="filterUF" onchange="onUFChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
+            <option value="ALL">Todas as UFs</option>
+          </select>
+        </div>
+
+        <!-- Filial Select -->
+        <div>
+          <label for="filterFilial" class="block text-[11px] font-semibold text-slate-500 mb-1">Filial / Regional</label>
+          <select id="filterFilial" onchange="onFilialChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
+            <option value="ALL">Todas as Filiais</option>
+          </select>
+        </div>
+
+        <!-- Unidade Select -->
+        <div>
+          <label for="filterUnidade" class="block text-[11px] font-semibold text-slate-500 mb-1">Unidade Ambulatorial</label>
+          <select id="filterUnidade" onchange="applyFilters()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
+            <option value="ALL">Todas as Unidades</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Charts & Regional Breakdown -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Chart: Panorama por UF (7 cols) -->
+      <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-blue-800"></i>
+              Volume e Adesão por Estado (UF)
+            </h3>
+            <p class="text-xs text-slate-500">Comparativo de treinamentos concluídos vs. pendentes em cada UF</p>
+          </div>
+          <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 self-start sm:self-auto">
+            Clique em uma barra para filtrar a UF
+          </span>
+        </div>
+        <div class="relative w-full h-72 sm:h-80">
+          <canvas id="chartUF"></canvas>
+        </div>
+      </div>
+
+      <!-- Right Chart: Adesão por Especialidade & Status (5 cols) -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div class="mb-4">
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-orange-500"></i>
+            Proporção por Especialidade e Status
+          </h3>
+          <p class="text-xs text-slate-500">Distribuição consolidada conforme filtros ativos</p>
+        </div>
+        <div class="relative w-full h-60 flex items-center justify-center">
+          <canvas id="chartSpecialty"></canvas>
+        </div>
+        <!-- Mini Summary Legend Box -->
+        <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <span class="text-[11px] font-bold uppercase text-slate-400 block">Unidades Atendidas</span>
+            <span id="statUnidadesCount" class="text-lg font-extrabold text-slate-800">29</span>
+            <span class="text-xs text-slate-500 ml-1">clínicas</span>
+          </div>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <span class="text-[11px] font-bold uppercase text-slate-400 block">Estados (UFs)</span>
+            <span id="statUFsCount" class="text-lg font-extrabold text-slate-800">14</span>
+            <span class="text-xs text-slate-500 ml-1">estados</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Ranking de Adesão por Filial / Unidade -->
+    <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-hospital-user text-orange-500"></i>
+            Acompanhamento por Unidade Ambulatorial
+          </h3>
+          <p class="text-xs text-slate-500">Progresso de conclusão por clínica/unidade (clique em uma unidade para filtrar a tabela abaixo)</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-500">Ordenar por:</span>
+          <select id="sortUnidadesMode" onchange="renderUnidadesProgress()" class="px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none">
+            <option value="VOLUME">Maior Volume de Profissionais</option>
+            <option value="ADESAO_DESC">Maior % de Adesão</option>
+            <option value="PENDENTES_DESC">Mais Pendentes</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="unidadesProgressContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Detailed Professionals Table -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-blue-900"></i>
+            Relação Nominal de Profissionais (<span id="tableCountBadge">82</span> registros)
+          </h3>
+          <p class="text-xs text-slate-500">Detalhamento completo da aba ACOMPANHAMENTO com status individualizado</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-500">Dica: Clique no cabeçalho para ordenar</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-[540px] overflow-y-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 select-none">
+            <tr>
+              <th onclick="sortTableBy('UF')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-1.5">UF <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+              <th onclick="sortTableBy('Filial')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-1.5">Filial <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+              <th onclick="sortTableBy('Unidade')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-1.5">Unidade <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+              <th onclick="sortTableBy('Especialidades')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-1.5">Especialidade <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+              <th onclick="sortTableBy('Profissional')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-1.5">Profissional <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+              <th onclick="sortTableBy('STATUS TREINAMENTO')" class="py-3.5 px-4 text-center cursor-pointer hover:bg-slate-100 transition-colors">
+                <div class="flex items-center justify-center gap-1.5">Status Treinamento <i class="fa-solid fa-sort text-slate-300"></i></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="professionalsTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="tableEmptyState" class="hidden py-12 text-center">
+        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+          <i class="fa-solid fa-magnifying-glass-minus text-lg"></i>
+        </div>
+        <p class="text-sm font-bold text-slate-700">Nenhum registro encontrado com os filtros selecionados</p>
+        <p class="text-xs text-slate-500 mt-1">Tente limpar os filtros ou ajustar os termos da busca.</p>
+        <button onclick="resetAllFilters()" class="mt-3 px-4 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all">
+          Restaurar Todos os Registros
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200/80 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+        <span>Painel de Monitoramento — Protocolos Ambulatoriais (Hematologia & Arritmologia)</span>
+      </div>
+      <div>
+        <span>Atualização protegida por senha • Compatível com arquivos <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">.xlsx</code></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- PASSWORD-PROTECTED ADMIN MODAL FOR UPDATING SPREADSHEET -->
+  <div id="adminModal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="glass-header px-6 py-5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/40 flex items-center justify-center text-orange-300">
+            <i id="modalHeaderIcon" class="fa-solid fa-shield-halved text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Atualizar Planilha de Acompanhamento</h3>
+            <p class="text-xs text-slate-300">Área restrita ao administrador do painel</p>
+          </div>
+        </div>
+        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- STEP 1: Password Verification View -->
+      <div id="adminLockView" class="p-6 space-y-4">
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3">
+          <i class="fa-solid fa-lock text-orange-600 mt-0.5"></i>
+          <div class="text-xs text-slate-700 leading-relaxed">
+            Esta funcionalidade é restrita. Para enviar uma nova cópia da planilha de acompanhamento (<strong class="font-bold">.xlsx</strong>), insira sua credencial de administrador abaixo.
+          </div>
+        </div>
+
+        <div>
+          <label for="adminPasswordInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Senha do Administrador
+          </label>
+          <div class="relative">
+            <input
+              type="password"
+              id="adminPasswordInput"
+              autocomplete="off"
+              onkeydown="if(event.key === 'Enter') verifyAdminPassword()"
+              placeholder="Digite a senha de acesso..."
+              class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+            />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i id="eyeIcon" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          <p id="passwordErrorMsg" class="hidden text-xs font-semibold text-rose-600 mt-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>Senha incorreta. Acesso negado.</span>
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button onclick="closeAdminModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            Cancelar
+          </button>
+          <button onclick="verifyAdminPassword()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md transition-all flex items-center gap-2">
+            <i class="fa-solid fa-unlock-keyhole"></i>
+            <span>Desbloquear Upload</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Unlocked File Dropzone & Admin Controls -->
+      <div id="adminUnlockedView" class="hidden p-6 space-y-5">
+        
+        <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl">
+          <div class="flex items-center gap-2 text-xs font-bold text-emerald-800">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>Modo Administrador Desbloqueado</span>
+          </div>
+          <button onclick="lockAdminSession()" class="text-[11px] font-semibold text-emerald-700 hover:underline">
+            Bloquear novamente
+          </button>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div
+          id="excelDropzone"
+          onclick="document.getElementById('excelFileInput').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleFileDrop(event)"
+          class="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/30 rounded-2xl p-6 text-center cursor-pointer transition-all group"
+        >
+          <input
+            type="file"
+            id="excelFileInput"
+            accept=".xlsx,.xls,.csv"
+            onchange="handleFileSelect(event)"
+            class="hidden"
+          />
+          <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
+            <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+          </div>
+          <p class="text-sm font-bold text-slate-800">
+            Clique para selecionar ou arraste a cópia da planilha aqui
+          </p>
+          <p class="text-xs text-slate-500 mt-1">
+            Suporta <code class="font-semibold text-slate-700">.xlsx</code>, <code class="font-semibold text-slate-700">.xls</code> ou <code class="font-semibold text-slate-700">.csv</code> (lê automaticamente a aba <strong class="text-slate-700">ACOMPANHAMENTO</strong>)
+          </p>
+        </div>
+
+        <!-- Upload Status Feedback Box -->
+        <div id="uploadFeedbackBox" class="hidden rounded-2xl p-4 bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-2">
+          <div class="flex items-center justify-between font-bold">
+            <span id="uploadFileName"><i class="fa-solid fa-file-excel mr-1.5 text-emerald-600"></i>Planilha Carregada!</span>
+            <span id="uploadRecordCount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-800">0 registros</span>
+          </div>
+          <p class="text-[11px] text-blue-700">
+            Os gráficos e indicadores já foram atualizados no seu navegador. Se desejar compartilhar este HTML já com os novos dados embutidos no código-fonte, clique no botão abaixo:
+          </p>
+          <button onclick="downloadStandaloneUpdatedHTML()" class="w-full py-2.5 px-4 rounded-xl bg-blue-900 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all">
+            <i class="fa-solid fa-download"></i>
+            <span>Baixar HTML Atualizado (Para Compartilhar)</span>
+          </button>
+        </div>
+
+        <!-- Additional Admin Utilities: Change Password & Reset Data -->
+        <div class="pt-3 border-t border-slate-200 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <button onclick="togglePasswordChangeSection()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-key text-orange-500"></i>
+              <span>Alterar Senha de Proteção</span>
+            </button>
+
+            <button onclick="restoreEmbeddedDataset()" class="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Restaurar Base Original (82 registros)</span>
+            </button>
+          </div>
+
+          <!-- Collapsible Change Password Box -->
+          <div id="changePasswordBox" class="hidden bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+            <label class="block text-[11px] font-bold uppercase text-slate-500">Definir Nova Senha do Botão</label>
+            <div class="flex gap-2">
+              <input
+                type="password"
+                id="newAdminPasswordInput"
+                autocomplete="new-password"
+                placeholder="Digite a nova senha..."
+                class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500"
+              />
+              <button onclick="saveNewAdminPassword()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all">
+                Salvar Senha
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500">
+              Dica: Ao clicar em "Baixar HTML Atualizado", sua nova senha também ficará gravada de forma codificada no arquivo exportado.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Main Application Script -->
+  <script>
+    // ============================================================================
+    // 1. DADOS EMBUTIDOS DA ABA "ACOMPANHAMENTO" (82 REGISTROS ORIGINAIS)
+    // ============================================================================
+    /*__EMBEDDED_DATA_START__*/
+    const INITIAL_EMBEDDED_DATA = [
+      {"UF":"CE","Filial":"FORTALEZA","Unidade":"CLÍNICA LOBO FILHO","Especialidades":"HEMATOLOGIA","Profissional":"CIBELE NOBREGA AGUIAR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"CE","Filial":"FORTALEZA","Unidade":"CLÍNICA LOBO FILHO","Especialidades":"HEMATOLOGIA","Profissional":"DEIVIDE DE SOUSA OLIVEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"CE","Filial":"JUAZEIRO","Unidade":"NOVA CLÍNICA CARIRI","Especialidades":"HEMATOLOGIA","Profissional":"EMMANUEL NUNES SAMPAIO DE LACERDA","STATUS TREINAMENTO":"CONCLUIDO"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"AYMAN SAMAAN","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"FRANCISCO XAVIER SUGAI","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"MARISTELA DE SOUZA E SILVA LOPES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"JOAO GARIBALDI DE REZENDE JUNIOR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"BRUNA ZORZAN LOBASSI","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"SABRINA DO NASCIMENTO TAVEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"CENTRO CLINICO SAO GABRIEL","Especialidades":"HEMATOLOGIA","Profissional":"BARBARA PAVAN","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SAO PAULO - NDI SP","Unidade":"NUCLEO CASE UNIDADE AVANCADA SALVALUS","Especialidades":"HEMATOLOGIA","Profissional":"LEANDRO DE PADUA SANTO SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"ABCDMR - NDI SP","Unidade":"CENTRO CLINICO SAO BERNARDO I","Especialidades":"HEMATOLOGIA","Profissional":"BRUNO APARECIDO DOS SANTOS MENDES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"ABCDMR - NDI SP","Unidade":"CENTRO CLINICO SAO BERNARDO I","Especialidades":"HEMATOLOGIA","Profissional":"JOAO PAULO PIRES DA SILVEIRA","STATUS TREINAMENTO":"CONCLUIDO"},
+      {"UF":"SP","Filial":"ABCDMR - NDI SP","Unidade":"CENTRO CLINICO SAO BERNARDO I","Especialidades":"HEMATOLOGIA","Profissional":"JOAO GARIBALDI DE REZENDE JUNIOR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"ABCDMR - NDI SP","Unidade":"CENTRO CLINICO SAO BERNARDO I","Especialidades":"HEMATOLOGIA","Profissional":"MARISTELA DE SOUZA E SILVA LOPES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SOROCABA - NDI SP","Unidade":"CENTRO CLINICO TRUJILLO I","Especialidades":"HEMATOLOGIA","Profissional":"MARINA DE FREITAS MENIN","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"ARARAQUARA","Unidade":"CLÍNICA 9 DE JULHO","Especialidades":"HEMATOLOGIA","Profissional":"ANA PAULA COSTA NUNES DA CUNHA","STATUS TREINAMENTO":"CONCLUIDO"},
+      {"UF":"SP","Filial":"SÃO JOSE DOS CAMPOS","Unidade":"CENTRO MEDICO ESPECIALIDADES","Especialidades":"HEMATOLOGIA","Profissional":"ANA ALICE MONTEIRO ZUNG","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SERTAOZINHO","Unidade":"CLÍNICA BARAO DO RIO BRANCO","Especialidades":"HEMATOLOGIA","Profissional":"ANA PAULA COSTA NUNES DA CUNHA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"RIBEIRAO PRETO","Unidade":"CLÍNICA GARIBALDI","Especialidades":"HEMATOLOGIA","Profissional":"ISABELLY RIBEIRO BARBOSA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"RIBEIRAO PRETO","Unidade":"CLÍNICA GARIBALDI","Especialidades":"HEMATOLOGIA","Profissional":"GERALDO SANT ANA DA CUNHA JUNIOR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"RIBEIRAO PRETO","Unidade":"CLÍNICA GARIBALDI","Especialidades":"HEMATOLOGIA","Profissional":"GERALDO SANTANA DA CUNHA JUNIOR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"RIBEIRAO PRETO","Unidade":"CLÍNICA GARIBALDI","Especialidades":"HEMATOLOGIA","Profissional":"GABRIELA GONZALES HECK","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"RIBEIRAO PRETO","Unidade":"MAIS SAUDE RIBEIRAO PRETO","Especialidades":"HEMATOLOGIA","Profissional":"JOAO PAULO LETTIERI DA SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"BAIXADA - NDI SP","Unidade":"CENTRO CLINICO FREI GALVAO - SANTOS","Especialidades":"HEMATOLOGIA","Profissional":"JOAO PAULO PIRES DA SILVEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"CAMPINAS - NDI SP","Unidade":"QUALIVIDA CAMPINAS","Especialidades":"HEMATOLOGIA","Profissional":"JOAO PAULO CABRAL DE MAGALHAES GOMES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"SANTOS- NDI SP","Unidade":"CLINICA AMADOR BUENO","Especialidades":"HEMATOLOGIA","Profissional":"JOAO PAULO PIRES DA SILVEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"BAURU","Unidade":"CONS DANIEL DITZEL","Especialidades":"HEMATOLOGIA","Profissional":"DANIEL DITZEL SANTOS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"ICARO MATHEUS FELIX SANTOS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"ANA DULCE LIMA DE LUNA FREIRE","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"MONICA CORTEZ GOMES DA SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"CAROLINA NATERCIA DA SILVA LIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"ELTON MENEZES GOMES SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"VIVIANE CUNHA CAIXETA GODOY","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"CAROLINA NATERCIA SILVA LIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RN","Filial":"NATAL","Unidade":"CLÍNICA ALECRIM","Especialidades":"HEMATOLOGIA","Profissional":"FRANCISCO FERNANDES DO NASCIMENTO JUNIOR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RN","Filial":"NATAL","Unidade":"CLÍNICA ALECRIM","Especialidades":"HEMATOLOGIA","Profissional":"DIOGO BARBALHO CHAVES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"RENATA GERMINI SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"ANNE MURIEL CARNEIRO SOARES ANDRADE","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"ISABELLA DE OLIVEIRA DIAS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"MARCIA MICHELLE SOUZA DA SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"VANESSA DE LUCAS OLIVEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"CAROLINA RIBEIRO DE CASTRO PIRES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"TAINA VITTI LOURENCO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"LIVIA PASSINI GUIMARAES GOMES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"TRIANGULO MINEIRO","Unidade":"CLÍNICA UBERABA","Especialidades":"HEMATOLOGIA","Profissional":"FABRICIO FREDERICO MENDES MARTINS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"UBERLÂNDIA","Unidade":"HOSPITAL MADRECOR","Especialidades":"HEMATOLOGIA","Profissional":"MARIO HUEB ABDALA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"UBERLÂNDIA","Unidade":"HOSPITAL MADRECOR","Especialidades":"HEMATOLOGIA","Profissional":"FABRICIO FREDERICO MENDES MARTINS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"MG","Filial":"DIVINOPOLIS - NDI MINAS","Unidade":"ONCOLOGIA CENTRO CLINICO SANTA","Especialidades":"HEMATOLOGIA","Profissional":"NATALIA MARTINS BERNARDES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"GO","Filial":"GOIANIA","Unidade":"CLÍNICA C-139","Especialidades":"HEMATOLOGIA","Profissional":"LUIZ HENRIQUE SOUZA COSTA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"GO","Filial":"GOIANIA","Unidade":"CLÍNICA C-139","Especialidades":"HEMATOLOGIA","Profissional":"ANNE CAROLINE DE BRITO EDIR","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"GO","Filial":"GOIANIA","Unidade":"CLÍNICA C-139","Especialidades":"HEMATOLOGIA","Profissional":"ISABELLY RIBEIRO BARBOSA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"AM","Filial":"MANAUS","Unidade":"CLÍNICA VIEIRALVES","Especialidades":"HEMATOLOGIA","Profissional":"JORGE AUGUSTO ANDRADE DE GODOY BEZERRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"AM","Filial":"MANAUS","Unidade":"CLÍNICA VIEIRALVES","Especialidades":"HEMATOLOGIA","Profissional":"RODRIGO DE SOUZA LEITAO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"AM","Filial":"MANAUS","Unidade":"CLÍNICA VIEIRALVES","Especialidades":"HEMATOLOGIA","Profissional":"RUTH HELENA PERDIZ WATANABE","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"AM","Filial":"MANAUS","Unidade":"CLÍNICA VIEIRALVES","Especialidades":"HEMATOLOGIA","Profissional":"SUENIA MENDONÇA DE ARAUJO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"HEMATOLOGIA","Profissional":"NATHALIA HELBIG DIAS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"HEMATOLOGIA","Profissional":"EMANUELLE TOLEDO ORTIZ","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"SAO LEOPOLDO","Unidade":"CLÍNICA SAO LEOPOLDO","Especialidades":"HEMATOLOGIA","Profissional":"EMANUELLE TOLEDO ORTIZ","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"SAO LEOPOLDO","Unidade":"CLÍNICA SAO LEOPOLDO","Especialidades":"HEMATOLOGIA","Profissional":"ANDRE FIORIN MARINATO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"SAO LEOPOLDO","Unidade":"CLÍNICA SAO LEOPOLDO","Especialidades":"HEMATOLOGIA","Profissional":"CRISTIAN KOCH WEBER","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"SAO LEOPOLDO","Unidade":"CLÍNICA SAO LEOPOLDO","Especialidades":"HEMATOLOGIA","Profissional":"NATHALIA HELBIG DIAS","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SE","Filial":"ARACAJÚ","Unidade":"CLÍNICA HERMES FONTES","Especialidades":"HEMATOLOGIA","Profissional":"RICHER MOTA DA SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"HENRIQUE PEREZ FILIK","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"RAFAELLA VERBISKI DE ANDRADE","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"HANAYRINE DE SOUZA CHEM","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"NYARA WALLESKA MACIEL DE FRANCA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"FABIOLA PABST BREMER","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"PR","Filial":"CURITIBA","Unidade":"CENTRO ONCOLOGICO CABRAL","Especialidades":"HEMATOLOGIA","Profissional":"MAURICIO LITTIERI","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"DF","Filial":"BRASILIA","Unidade":"ONCOLOGIA HOSPITAL BRASILIENSE","Especialidades":"HEMATOLOGIA","Profissional":"NATHALIA ARAUJO GUNDIM MELO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SC","Filial":"JOINVILLE","Unidade":"HOSPITAL GERAL JOINVILLE","Especialidades":"HEMATOLOGIA","Profissional":"LEANDRO DE PADUA SANTO SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SC","Filial":"JOINVILLE","Unidade":"ONCOLOGIA JARAGUA DO SUL","Especialidades":"HEMATOLOGIA","Profissional":"LEANDRO DE PADUA SANTO SILVA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"BA","Filial":"SALVADOR","Unidade":"CLÍNICA PITUBA II","Especialidades":"ARRITMOLOGIA","Profissional":"CARLOS MANOEL DE OLIVEIRA FIGUEIREDO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"BA","Filial":"SALVADOR","Unidade":"CLÍNICA PITUBA II","Especialidades":"ARRITMOLOGIA","Profissional":"EDUARDA SILVA RODRIGUES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"BA","Filial":"SALVADOR","Unidade":"CLÍNICA PITUBA II","Especialidades":"ARRITMOLOGIA","Profissional":"THIAGO DOS SANTOS SILVA MARQUES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"AL","Filial":"MACEIÓ","Unidade":"CLÍNICA FERNANDES LIMA","Especialidades":"ARRITMOLOGIA","Profissional":"JOYCE ADERBORA ANDRE NOGUEIRA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SE","Filial":"ARACAJÚ","Unidade":"CLÍNICA ARACAJÚ","Especialidades":"ARRITMOLOGIA","Profissional":"CARLOS MANOEL DE OLIVEIRA FIGUEIREDO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"ARRITMOLOGIA","Profissional":"GABRIELA ARAUJO BEM","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"ARRITMOLOGIA","Profissional":"DANIEL GARCIA GOMES","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"ARRITMOLOGIA","Profissional":"HUMBERTO BUTZKE DA MOTTA","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"RS","Filial":"PORTO ALEGRE","Unidade":"CLÍNICA HUMANIZA","Especialidades":"ARRITMOLOGIA","Profissional":"LUCAS SIMONETTO FAGANELLO","STATUS TREINAMENTO":"PENDENTE"},
+      {"UF":"SP","Filial":"AMERICANA - NDI SP","Unidade":"QUALIVIDA AMERICANA","Especialidades":"ARRITMOLOGIA","Profissional":"MARCOS ROGERIO JOAQUIM","STATUS TREINAMENTO":"PENDENTE"}
+    ];
+    let DEFAULT_ADMIN_TOKEN = "YWRtaW4yMDI2";
+    let EMBEDDED_LAST_UPDATE = "Base Original Incorporada (82 registros)";
+    /*__EMBEDDED_DATA_END__*/
+
+    // ============================================================================
+    // 2. ESTADO GLOBAL E GERENCIAMENTO DE PERSISTÊNCIA
+    // ============================================================================
+    const STORAGE_KEY_DATA = "protocolos_dashboard_data_v1";
+    const STORAGE_KEY_META = "protocolos_dashboard_meta_v1";
+    const STORAGE_KEY_PASS = "protocolos_dashboard_token_v1";
+
+    let rawDataset = [];
+    let filteredDataset = [];
+    let activeSpecialty = "ALL"; // ALL | HEMATOLOGIA | ARRITMOLOGIA
+    let activeStatus = "ALL";    // ALL | CONCLUIDO | PENDENTE
+    let currentSortColumn = "UF";
+    let currentSortAsc = true;
+    let isAdminUnlocked = false;
+
+    // Instâncias dos Gráficos Chart.js
+    let chartUFInstance = null;
+    let chartSpecialtyInstance = null;
+
+    // ============================================================================
+    // 3. INICIALIZAÇÃO DO DASHBOARD
+    // ============================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      loadDatasetFromStorageOrDefault();
+      populateUFDropdown();
+      populateFilialDropdown();
+      populateUnidadeDropdown();
+      applyFilters();
+    });
+
+    function loadDatasetFromStorageOrDefault() {
+      try {
+        const savedData = localStorage.getItem(STORAGE_KEY_DATA);
+        const savedMeta = localStorage.getItem(STORAGE_KEY_META);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            rawDataset = parsed;
+            document.getElementById("lastUpdatedText").textContent = savedMeta || "Planilha Atualizada Localmente";
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Erro ao ler localStorage:", err);
+      }
+      rawDataset = JSON.parse(JSON.stringify(INITIAL_EMBEDDED_DATA));
+      document.getElementById("lastUpdatedText").textContent = EMBEDDED_LAST_UPDATE;
+    }
+
+    function encodeToken(str) {
+      try {
+        return btoa(unescape(encodeURIComponent(str)));
+      } catch (e) {
+        return str;
+      }
+    }
+
+    function getAdminToken() {
+      try {
+        return localStorage.getItem(STORAGE_KEY_PASS) || DEFAULT_ADMIN_TOKEN;
+      } catch (e) {
+        return DEFAULT_ADMIN_TOKEN;
+      }
+    }
+
+    // ============================================================================
+    // 4. FILTROS E SEGMENTAÇÃO DINÂMICA
+    // ============================================================================
+    function setQuickSpecialty(spec) {
+      activeSpecialty = spec;
+      // Atualiza estilo das pílulas
+      const btnAll = document.getElementById("tabSpecALL");
+      const btnHema = document.getElementById("tabSpecHEMA");
+      const btnArri = document.getElementById("tabSpecARRI");
+
+      btnAll.className = spec === "ALL"
+        ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-900 text-white shadow-sm"
+        : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
+
+      btnHema.className = spec === "HEMATOLOGIA"
+        ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-rose-600 text-white shadow-sm"
+        : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
+
+      btnArri.className = spec === "ARRITMOLOGIA"
+        ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow-sm"
+        : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
+
+      applyFilters();
+    }
+
+    function setQuickStatus(status) {
+      activeStatus = status;
+      const btnAll = document.getElementById("tabStatusALL");
+      const btnConc = document.getElementById("tabStatusCONC");
+      const btnPend = document.getElementById("tabStatusPEND");
+
+      btnAll.className = status === "ALL"
+        ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-blue-900 text-white shadow-sm"
+        : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200";
+
+      btnConc.className = status === "CONCLUIDO"
+        ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm"
+        : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100";
+
+      btnPend.className = status === "PENDENTE"
+        ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-orange-600 text-white shadow-sm"
+        : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100";
+
+      applyFilters();
+    }
+
+    function populateUFDropdown() {
+      const ufSelect = document.getElementById("filterUF");
+      const currentVal = ufSelect.value || "ALL";
+      const ufs = [...new Set(rawDataset.map(r => r.UF).filter(Boolean))].sort();
+
+      ufSelect.innerHTML = `<option value="ALL">Todas as UFs (${ufs.length})</option>`;
+      ufs.forEach(uf => {
+        const count = rawDataset.filter(r => r.UF === uf).length;
+        ufSelect.innerHTML += `<option value="${uf}">${uf} (${count})</option>`;
+      });
+
+      if (ufs.includes(currentVal)) ufSelect.value = currentVal;
+    }
+
+    function populateFilialDropdown() {
+      const ufVal = document.getElementById("filterUF").value;
+      const filialSelect = document.getElementById("filterFilial");
+      const currentVal = filialSelect.value || "ALL";
+
+      const subset = ufVal === "ALL" ? rawDataset : rawDataset.filter(r => r.UF === ufVal);
+      const filiais = [...new Set(subset.map(r => r.Filial).filter(Boolean))].sort();
+
+      filialSelect.innerHTML = `<option value="ALL">Todas as Filiais (${filiais.length})</option>`;
+      filiais.forEach(filial => {
+        const count = subset.filter(r => r.Filial === filial).length;
+        filialSelect.innerHTML += `<option value="${filial}">${filial} (${count})</option>`;
+      });
+
+      if (filiais.includes(currentVal)) {
+        filialSelect.value = currentVal;
+      } else {
+        filialSelect.value = "ALL";
+      }
+    }
+
+    function populateUnidadeDropdown() {
+      const ufVal = document.getElementById("filterUF").value;
+      const filialVal = document.getElementById("filterFilial").value;
+      const unidadeSelect = document.getElementById("filterUnidade");
+      const currentVal = unidadeSelect.value || "ALL";
+
+      let subset = rawDataset;
+      if (ufVal !== "ALL") subset = subset.filter(r => r.UF === ufVal);
+      if (filialVal !== "ALL") subset = subset.filter(r => r.Filial === filialVal);
+
+      const unidades = [...new Set(subset.map(r => r.Unidade).filter(Boolean))].sort();
+
+      unidadeSelect.innerHTML = `<option value="ALL">Todas as Unidades (${unidades.length})</option>`;
+      unidades.forEach(uni => {
+        const count = subset.filter(r => r.Unidade === uni).length;
+        unidadeSelect.innerHTML += `<option value="${uni}">${uni} (${count})</option>`;
+      });
+
+      if (unidades.includes(currentVal)) {
+        unidadeSelect.value = currentVal;
+      } else {
+        unidadeSelect.value = "ALL";
+      }
+    }
+
+    function onUFChange() {
+      populateFilialDropdown();
+      populateUnidadeDropdown();
+      applyFilters();
+    }
+
+    function onFilialChange() {
+      populateUnidadeDropdown();
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      document.getElementById("filterSearch").value = "";
+      document.getElementById("filterUF").value = "ALL";
+      populateFilialDropdown();
+      populateUnidadeDropdown();
+      setQuickSpecialty("ALL");
+      setQuickStatus("ALL");
+      showToast("Filtros restaurados para a visão completa.", "info");
+    }
+
+    function applyFilters() {
+      const searchVal = (document.getElementById("filterSearch").value || "").trim().toUpperCase();
+      const ufVal = document.getElementById("filterUF").value;
+      const filialVal = document.getElementById("filterFilial").value;
+      const unidadeVal = document.getElementById("filterUnidade").value;
+
+      // Atualiza contadores das pílulas de especialidade sobre a base total
+      document.getElementById("pillCountAll").textContent = rawDataset.length;
+      document.getElementById("pillCountHema").textContent = rawDataset.filter(r => r.Especialidades === "HEMATOLOGIA").length;
+      document.getElementById("pillCountArri").textContent = rawDataset.filter(r => r.Especialidades === "ARRITMOLOGIA").length;
+
+      filteredDataset = rawDataset.filter(row => {
+        if (activeSpecialty !== "ALL" && row.Especialidades !== activeSpecialty) return false;
+        if (activeStatus !== "ALL" && row["STATUS TREINAMENTO"] !== activeStatus) return false;
+        if (ufVal !== "ALL" && row.UF !== ufVal) return false;
+        if (filialVal !== "ALL" && row.Filial !== filialVal) return false;
+        if (unidadeVal !== "ALL" && row.Unidade !== unidadeVal) return false;
+
+        if (searchVal) {
+          const hay = `${row.Profissional} ${row.Unidade} ${row.Filial} ${row.UF} ${row.Especialidades}`.toUpperCase();
+          if (!hay.includes(searchVal)) return false;
+        }
+        return true;
+      });
+
+      updateKPICards();
+      renderCharts();
+      renderUnidadesProgress();
+      renderTable();
+    }
+
+    // ============================================================================
+    // 5. ATUALIZAÇÃO DOS CARDS DE INDICADORES (KPIs)
+    // ============================================================================
+    function updateKPICards() {
+      const total = filteredDataset.length;
+      const uniqueProfs = new Set(filteredDataset.map(r => r.Profissional)).size;
+      const concluidos = filteredDataset.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const pendentes = total - concluidos;
+
+      const taxaGlobal = total > 0 ? ((concluidos / total) * 100).toFixed(1) : "0.0";
+      const taxaPend = total > 0 ? ((pendentes / total) * 100).toFixed(1) : "0.0";
+
+      document.getElementById("kpiTotalRecords").textContent = total;
+      document.getElementById("kpiUniqueProfs").textContent = uniqueProfs;
+
+      document.getElementById("kpiConcluidos").textContent = concluidos;
+      document.getElementById("kpiTaxaGlobal").textContent = `${taxaGlobal}%`;
+      document.getElementById("kpiBarGlobal").style.width = `${taxaGlobal}%`;
+
+      document.getElementById("kpiPendentes").textContent = pendentes;
+      document.getElementById("kpiTaxaPendente").textContent = `${taxaPend}%`;
+      document.getElementById("kpiBarPendente").style.width = `${taxaPend}%`;
+
+      // Especialidades (calculadas sobre o conjunto filtrado ou global se filtro de especialidade estiver ativo)
+      const hemaRows = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA");
+      const hemaConc = hemaRows.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const hemaPerc = hemaRows.length > 0 ? ((hemaConc / hemaRows.length) * 100).toFixed(1) : "0.0";
+
+      document.getElementById("kpiHemaConc").textContent = hemaConc;
+      document.getElementById("kpiHemaTotal").textContent = hemaRows.length;
+      document.getElementById("kpiHemaPerc").textContent = `${hemaPerc}%`;
+      document.getElementById("kpiBarHema").style.width = `${hemaPerc}%`;
+
+      const arriRows = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA");
+      const arriConc = arriRows.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const arriPerc = arriRows.length > 0 ? ((arriConc / arriRows.length) * 100).toFixed(1) : "0.0";
+
+      document.getElementById("kpiArriConc").textContent = arriConc;
+      document.getElementById("kpiArriTotal").textContent = arriRows.length;
+      document.getElementById("kpiArriPerc").textContent = `${arriPerc}%`;
+      document.getElementById("kpiBarArri").style.width = `${arriPerc}%`;
+
+      // Mini stats
+      document.getElementById("statUnidadesCount").textContent = new Set(filteredDataset.map(r => r.Unidade)).size;
+      document.getElementById("statUFsCount").textContent = new Set(filteredDataset.map(r => r.UF)).size;
+    }
+
+    // ============================================================================
+    // 6. GRÁFICOS INTERATIVOS (CHART.JS)
+    // ============================================================================
+    function renderCharts() {
+      renderUFChart();
+      renderSpecialtyChart();
+    }
+
+    function renderUFChart() {
+      const ctx = document.getElementById("chartUF").getContext("2d");
+
+      // Agrupa por UF e ordena por volume total decrescente
+      const ufStats = {};
+      filteredDataset.forEach(r => {
+        const uf = r.UF || "N/A";
+        if (!ufStats[uf]) ufStats[uf] = { concluido: 0, pendente: 0, total: 0 };
+        ufStats[uf].total++;
+        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") {
+          ufStats[uf].concluido++;
+        } else {
+          ufStats[uf].pendente++;
+        }
+      });
+
+      const sortedUFs = Object.keys(ufStats).sort((a, b) => ufStats[b].total - ufStats[a].total);
+      const dataConcluido = sortedUFs.map(uf => ufStats[uf].concluido);
+      const dataPendente = sortedUFs.map(uf => ufStats[uf].pendente);
+
+      if (chartUFInstance) {
+        chartUFInstance.destroy();
+      }
+
+      chartUFInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: sortedUFs,
+          datasets: [
+            {
+              label: "Concluído",
+              data: dataConcluido,
+              backgroundColor: "#10b981",
+              borderRadius: 6,
+              barPercentage: 0.68,
+            },
+            {
+              label: "Pendente",
+              data: dataPendente,
+              backgroundColor: "#f97316",
+              borderRadius: 6,
+              barPercentage: 0.68,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (evt, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const clickedUF = sortedUFs[index];
+              const ufSelect = document.getElementById("filterUF");
+              ufSelect.value = ufSelect.value === clickedUF ? "ALL" : clickedUF;
+              onUFChange();
+            }
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              align: "end",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                font: { family: "Inter", size: 11, weight: "600" }
+              }
+            },
+            tooltip: {
+              backgroundColor: "#0f172a",
+              padding: 12,
+              cornerRadius: 10,
+              callbacks: {
+                afterBody: (items) => {
+                  const idx = items[0].dataIndex;
+                  const uf = sortedUFs[idx];
+                  const st = ufStats[uf];
+                  const perc = st.total > 0 ? ((st.concluido / st.total) * 100).toFixed(1) : "0.0";
+                  return `Total na UF: ${st.total}\nTaxa de Adesão: ${perc}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { font: { family: "Inter", size: 11, weight: "700" }, color: "#334155" }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { precision: 0, font: { family: "Inter", size: 11 }, color: "#64748b" },
+              grid: { color: "#f1f5f9" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderSpecialtyChart() {
+      const ctx = document.getElementById("chartSpecialty").getContext("2d");
+
+      const hemaConc = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const hemaPend = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
+      const arriConc = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const arriPend = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
+
+      if (chartSpecialtyInstance) {
+        chartSpecialtyInstance.destroy();
+      }
+
+      chartSpecialtyInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: [
+            "Hematologia (Concluído)",
+            "Hematologia (Pendente)",
+            "Arritmologia (Concluído)",
+            "Arritmologia (Pendente)"
+          ],
+          datasets: [{
+            data: [hemaConc, hemaPend, arriConc, arriPend],
+            backgroundColor: [
+              "#10b981", // Verde Esmeralda
+              "#f43f5e", // Rosa/Vermelho Hematologia Pendente
+              "#06b6d4", // Ciano Arritmologia Concluído
+              "#6366f1"  // Indigo Arritmologia Pendente
+            ],
+            borderWidth: 2,
+            borderColor: "#ffffff",
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "64%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                padding: 12,
+                font: { family: "Inter", size: 11, weight: "600" }
+              }
+            },
+            tooltip: {
+              backgroundColor: "#0f172a",
+              padding: 12,
+              cornerRadius: 10
+            }
+          }
+        }
+      });
+    }
+
+    // ============================================================================
+    // 7. PROGRESSO POR UNIDADE AMBULATORIAL
+    // ============================================================================
+    function renderUnidadesProgress() {
+      const container = document.getElementById("unidadesProgressContainer");
+      const sortMode = document.getElementById("sortUnidadesMode").value;
+
+      const mapUni = {};
+      filteredDataset.forEach(r => {
+        const key = r.Unidade || "UNIDADE NÃO INFORMADA";
+        if (!mapUni[key]) {
+          mapUni[key] = {
+            unidade: key,
+            uf: r.UF,
+            filial: r.Filial,
+            total: 0,
+            concluidos: 0,
+            pendentes: 0
+          };
+        }
+        mapUni[key].total++;
+        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") {
+          mapUni[key].concluidos++;
+        } else {
+          mapUni[key].pendentes++;
+        }
+      });
+
+      let list = Object.values(mapUni).map(item => ({
+        ...item,
+        perc: item.total > 0 ? (item.concluidos / item.total) * 100 : 0
+      }));
+
+      if (sortMode === "VOLUME") {
+        list.sort((a, b) => b.total - a.total || b.perc - a.perc);
+      } else if (sortMode === "ADESAO_DESC") {
+        list.sort((a, b) => b.perc - a.perc || b.concluidos - a.concluidos);
+      } else if (sortMode === "PENDENTES_DESC") {
+        list.sort((a, b) => b.pendentes - a.pendentes);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-400">Nenhuma unidade para exibir.</div>`;
+        return;
+      }
+
+      const selectedUnidade = document.getElementById("filterUnidade").value;
+
+      container.innerHTML = list.map(u => {
+        const isSelected = selectedUnidade === u.unidade;
+        const percFormatted = u.perc.toFixed(0);
+        const badgeColor = u.perc === 100
+          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+          : u.perc > 0
+            ? "bg-blue-100 text-blue-800 border-blue-200"
+            : "bg-slate-100 text-slate-600 border-slate-200";
+
+        return `
+          <div
+            onclick="selectUnidadeCard('${u.unidade.replace(/'/g, "\\'")}')"
+            class="p-3.5 rounded-xl border transition-all cursor-pointer ${
+              isSelected
+                ? "bg-orange-50/70 border-orange-500 ring-2 ring-orange-500/20"
+                : "bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80"
+            }"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded bg-slate-800 text-white">${u.uf}</span>
+                  <h4 class="text-xs font-bold text-slate-900 truncate" title="${u.unidade}">${u.unidade}</h4>
+                </div>
+                <p class="text-[11px] text-slate-500 truncate mt-0.5">${u.filial}</p>
+              </div>
+              <span class="px-2 py-0.5 text-[11px] font-extrabold rounded-lg border shrink-0 ${badgeColor}">
+                ${percFormatted}%
+              </span>
+            </div>
+
+            <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2.5 overflow-hidden">
+              <div class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: ${u.perc}%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+              <span><strong class="text-emerald-700">${u.concluidos}</strong> concluído(s)</span>
+              <span><strong class="text-orange-600">${u.pendentes}</strong> pendente(s)</span>
+              <span class="font-semibold text-slate-700">Total: ${u.total}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectUnidadeCard(unidadeName) {
+      const sel = document.getElementById("filterUnidade");
+      if (sel.value === unidadeName) {
+        sel.value = "ALL";
+      } else {
+        // Garante que a opção exista no select antes de selecionar
+        populateUnidadeDropdown();
+        sel.value = unidadeName;
+      }
+      applyFilters();
+    }
+
+    // ============================================================================
+    // 8. TABELA DETALHADA E ORDENAÇÃO
+    // ============================================================================
+    function sortTableBy(column) {
+      if (currentSortColumn === column) {
+        currentSortAsc = !currentSortAsc;
+      } else {
+        currentSortColumn = column;
+        currentSortAsc = true;
+      }
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("professionalsTableBody");
+      const emptyState = document.getElementById("tableEmptyState");
+      document.getElementById("tableCountBadge").textContent = filteredDataset.length;
+
+      if (filteredDataset.length === 0) {
+        tbody.innerHTML = "";
+        emptyState.classList.remove("hidden");
+        return;
+      }
+      emptyState.classList.add("hidden");
+
+      const sorted = [...filteredDataset].sort((a, b) => {
+        const valA = (a[currentSortColumn] || "").toString().toUpperCase();
+        const valB = (b[currentSortColumn] || "").toString().toUpperCase();
+        if (valA < valB) return currentSortAsc ? -1 : 1;
+        if (valA > valB) return currentSortAsc ? 1 : -1;
+        return 0;
+      });
+
+      tbody.innerHTML = sorted.map((row) => {
+        const isConcluido = row["STATUS TREINAMENTO"] === "CONCLUIDO";
+        const isHema = row.Especialidades === "HEMATOLOGIA";
+
+        const specBadge = isHema
+          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+               <i class="fa-solid fa-droplet text-[10px]"></i> HEMATOLOGIA
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+               <i class="fa-solid fa-heart-pulse text-[10px]"></i> ARRITMOLOGIA
+             </span>`;
+
+        const statusBadge = isConcluido
+          ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+               <i class="fa-solid fa-circle-check text-emerald-600"></i> CONCLUÍDO
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+               <i class="fa-solid fa-clock text-amber-600"></i> PENDENTE
+             </span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition-colors">
+            <td class="py-3 px-4 font-extrabold text-slate-800 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs">${row.UF || "-"}</span>
+            </td>
+            <td class="py-3 px-4 font-medium text-slate-600 whitespace-nowrap">${row.Filial || "-"}</td>
+            <td class="py-3 px-4 font-semibold text-slate-800">${row.Unidade || "-"}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${specBadge}</td>
+            <td class="py-3 px-4 font-bold text-slate-900">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center text-[11px] font-extrabold shrink-0">
+                  ${getInitials(row.Profissional)}
+                </div>
+                <span>${row.Profissional || "-"}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">${statusBadge}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function getInitials(name) {
+      if (!name) return "?";
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    // ============================================================================
+    // 9. MODAL DE ATUALIZAÇÃO PROTEGIDO POR SENHA & LEITURA DO EXCEL
+    // ============================================================================
+    function openAdminModal() {
+      const modal = document.getElementById("adminModal");
+      modal.classList.remove("hidden");
+      document.getElementById("passwordErrorMsg").classList.add("hidden");
+
+      if (isAdminUnlocked) {
+        showUnlockedAdminView();
+      } else {
+        document.getElementById("adminLockView").classList.remove("hidden");
+        document.getElementById("adminUnlockedView").classList.add("hidden");
+        setTimeout(() => document.getElementById("adminPasswordInput").focus(), 100);
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminModal").classList.add("hidden");
+    }
+
+    function togglePasswordVisibility() {
+      const input = document.getElementById("adminPasswordInput");
+      const icon = document.getElementById("eyeIcon");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.className = "fa-regular fa-eye-slash";
+      } else {
+        input.type = "password";
+        icon.className = "fa-regular fa-eye";
+      }
+    }
+
+    function verifyAdminPassword() {
+      const typed = document.getElementById("adminPasswordInput").value;
+      const expectedToken = getAdminToken();
+
+      if (encodeToken(typed) === expectedToken) {
+        isAdminUnlocked = true;
+        document.getElementById("adminPasswordInput").value = "";
+        document.getElementById("passwordErrorMsg").classList.add("hidden");
+        document.getElementById("lockIconHeader").className = "fa-solid fa-lock-open text-xs";
+        showUnlockedAdminView();
+        showToast("Acesso liberado! Agora você pode enviar a planilha atualizada.", "success");
+      } else {
+        document.getElementById("passwordErrorMsg").classList.remove("hidden");
+      }
+    }
+
+    function showUnlockedAdminView() {
+      document.getElementById("adminLockView").classList.add("hidden");
+      document.getElementById("adminUnlockedView").classList.remove("hidden");
+    }
+
+    function lockAdminSession() {
+      isAdminUnlocked = false;
+      document.getElementById("lockIconHeader").className = "fa-solid fa-lock text-xs";
+      document.getElementById("adminUnlockedView").classList.add("hidden");
+      document.getElementById("adminLockView").classList.remove("hidden");
+      showToast("Sessão de administrador bloqueada.", "info");
+    }
+
+    function togglePasswordChangeSection() {
+      const box = document.getElementById("changePasswordBox");
+      box.classList.toggle("hidden");
+    }
+
+    function saveNewAdminPassword() {
+      const newPass = (document.getElementById("newAdminPasswordInput").value || "").trim();
+      if (newPass.length < 4) {
+        showToast("A nova senha deve ter pelo menos 4 caracteres.", "error");
+        return;
+      }
+      const encoded = encodeToken(newPass);
+      DEFAULT_ADMIN_TOKEN = encoded;
+      try {
+        localStorage.setItem(STORAGE_KEY_PASS, encoded);
+      } catch (e) {}
+      document.getElementById("newAdminPasswordInput").value = "";
+      document.getElementById("changePasswordBox").classList.add("hidden");
+      showToast("Nova senha salva com sucesso!", "success");
+    }
+
+    // Drag and Drop Handlers
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("excelDropzone").classList.add("dropzone-active");
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("excelDropzone").classList.remove("dropzone-active");
+    }
+
+    function handleFileDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById("excelDropzone").classList.remove("dropzone-active");
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processExcelFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        processExcelFile(e.target.files[0]);
+        e.target.value = "";
+      }
+    }
+
+    // Processamento da planilha Excel com SheetJS
+    function processExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+
+          // Procura prioritariamente pela aba "ACOMPANHAMENTO"
+          let targetSheetName = workbook.SheetNames.find(
+            name => name.trim().toUpperCase().includes("ACOMPANHAMENTO")
+          );
+
+          // Caso não tenha o nome exato, procura a aba que possua as colunas UF e Profissional
+          if (!targetSheetName) {
+            for (const sName of workbook.SheetNames) {
+              const rowsPreview = XLSX.utils.sheet_to_json(workbook.Sheets[sName], { defval: "" });
+              if (rowsPreview.length > 0) {
+                const keysUpper = Object.keys(rowsPreview[0]).map(k => k.trim().toUpperCase());
+                if (keysUpper.includes("UF") && keysUpper.some(k => k.includes("PROFISSIONAL"))) {
+                  targetSheetName = sName;
+                  break;
+                }
+              }
+            }
+          }
+
+          // Fallback para a segunda aba ou primeira aba
+          if (!targetSheetName) {
+            targetSheetName = workbook.SheetNames[1] || workbook.SheetNames[0];
+          }
+
+          const worksheet = workbook.Sheets[targetSheetName];
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+          const normalizedRecords = normalizeSpreadsheetRows(rawJson);
+
+          if (normalizedRecords.length === 0) {
+            showToast("Não foram encontrados registros válidos na aba ACOMPANHAMENTO.", "error");
+            return;
+          }
+
+          // Atualiza estado global e localStorage
+          rawDataset = normalizedRecords;
+          const nowStr = new Date().toLocaleString("pt-BR", {
+            day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "2-digit", minute: "2-digit"
+          });
+          const metaLabel = `Atualizado em ${nowStr} (${normalizedRecords.length} vínculos)`;
+          EMBEDDED_LAST_UPDATE = metaLabel;
+
+          try {
+            localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(rawDataset));
+            localStorage.setItem(STORAGE_KEY_META, metaLabel);
+          } catch (storageErr) {
+            console.warn("Aviso localStorage:", storageErr);
+          }
+
+          document.getElementById("lastUpdatedText").textContent = metaLabel;
+
+          // Atualiza filtros e visões
+          populateUFDropdown();
+          populateFilialDropdown();
+          populateUnidadeDropdown();
+          applyFilters();
+
+          // Mostra feedback no modal
+          const feedbackBox = document.getElementById("uploadFeedbackBox");
+          feedbackBox.classList.remove("hidden");
+          document.getElementById("uploadFileName").innerHTML = `<i class="fa-solid fa-file-circle-check mr-1.5 text-emerald-600"></i>${file.name} (Aba: ${targetSheetName})`;
+          document.getElementById("uploadRecordCount").textContent = `${normalizedRecords.length} registros`;
+
+          showToast(`Planilha "${file.name}" importada com sucesso! (${normalizedRecords.length} registros)`, "success");
+        } catch (err) {
+          console.error(err);
+          showToast("Erro ao ler o arquivo Excel. Verifique se é um arquivo .xlsx válido.", "error");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function normalizeSpreadsheetRows(rows) {
+      const cleaned = [];
+
+      rows.forEach(row => {
+        // Mapeia chaves ignorando espaços extras e diferenças de caixa
+        const keyMap = {};
+        Object.keys(row).forEach(k => {
+          keyMap[k.trim().toUpperCase()] = row[k];
+        });
+
+        const uf = String(keyMap["UF"] || "").trim().toUpperCase();
+        const filial = String(keyMap["FILIAL"] || "").trim().toUpperCase();
+        const unidade = String(keyMap["UNIDADE"] || keyMap["UNIDADES"] || "").trim().toUpperCase();
+        let especialidade = String(keyMap["ESPECIALIDADES"] || keyMap["ESPECIALIDADE"] || "").trim().toUpperCase();
+        const profissional = String(keyMap["PROFISSIONAL"] || keyMap["MEDICO"] || keyMap["MÉDICO"] || "").trim().toUpperCase();
+        let statusRaw = String(
+          keyMap["STATUS TREINAMENTO"] ||
+          keyMap["STATUS"] ||
+          keyMap["SITUAÇÃO"] ||
+          ""
+        ).trim().toUpperCase();
+
+        // Ignora linhas em branco
+        if (!uf && !profissional && !unidade) return;
+
+        // Normaliza Especialidade
+        if (especialidade.includes("HEMATO")) especialidade = "HEMATOLOGIA";
+        else if (especialidade.includes("ARRITMO")) especialidade = "ARRITMOLOGIA";
+
+        // Normaliza Status (remove acentos e variações)
+        const statusNormalized = statusRaw
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+
+        let finalStatus = "PENDENTE";
+        if (
+          statusNormalized.includes("CONCLUIDO") ||
+          statusNormalized.includes("REALIZADO") ||
+          statusNormalized === "OK" ||
+          statusNormalized === "SIM"
+        ) {
+          finalStatus = "CONCLUIDO";
+        }
+
+        cleaned.push({
+          "UF": uf,
+          "Filial": filial,
+          "Unidade": unidade,
+          "Especialidades": especialidade || "HEMATOLOGIA",
+          "Profissional": profissional,
+          "STATUS TREINAMENTO": finalStatus
+        });
+      });
+
+      return cleaned;
+    }
+
+    function restoreEmbeddedDataset() {
+      try {
+        localStorage.removeItem(STORAGE_KEY_DATA);
+        localStorage.removeItem(STORAGE_KEY_META);
+      } catch (e) {}
+      rawDataset = JSON.parse(JSON.stringify(INITIAL_EMBEDDED_DATA));
+      document.getElementById("lastUpdatedText").textContent = "Base Original Incorporada (82 registros)";
+      document.getElementById("uploadFeedbackBox").classList.add("hidden");
+      resetAllFilters();
+      showToast("Base original de 82 registros restaurada!", "info");
+    }
+
+    // ============================================================================
+    // 10. EXPORTAR HTML ATUALIZADO E EXPORTAR VISÃO ATUAL PARA EXCEL
+    // ============================================================================
+    function downloadStandaloneUpdatedHTML() {
+      try {
+        const currentToken = getAdminToken();
+        const currentMeta = document.getElementById("lastUpdatedText").textContent;
+
+        let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+        const replacementBlock = `/*__EMBEDDED_DATA_START__*/\n    const INITIAL_EMBEDDED_DATA = ${JSON.stringify(rawDataset, null, 2)};\n    let DEFAULT_ADMIN_TOKEN = ${JSON.stringify(currentToken)};\n    let EMBEDDED_LAST_UPDATE = ${JSON.stringify(currentMeta)};\n    /*__EMBEDDED_DATA_END__*/`;
+
+        fullHtml = fullHtml.replace(
+          /\/\*__EMBEDDED_DATA_START__\*\/[\s\S]*?\/\*__EMBEDDED_DATA_END__\*\//,
+          replacementBlock
+        );
+
+        const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Dashboard_Protocolos_Hematologia_Arritmologia_Atualizado.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast("Arquivo HTML atualizado gerado com sucesso!", "success");
+      } catch (err) {
+        console.error(err);
+        showToast("Não foi possível exportar o HTML atualizado.", "error");
+      }
+    }
+
+    function exportCurrentFilteredView() {
+      if (filteredDataset.length === 0) {
+        showToast("Não há registros na visão atual para exportar.", "error");
+        return;
+      }
+      try {
+        const ws = XLSX.utils.json_to_sheet(filteredDataset);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "ACOMPANHAMENTO");
+        XLSX.writeFile(wb, "Acompanhamento_Protocolos_Filtrado.xlsx");
+        showToast(`Exportados ${filteredDataset.length} registros para Excel.`, "success");
+      } catch (err) {
+        console.error(err);
+        showToast("Erro ao exportar planilha.", "error");
+      }
+    }
+
+    // ============================================================================
+    // 11. SISTEMA DE NOTIFICAÇÕES (TOASTS SEM ALERT)
+    // ============================================================================
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+
+      let styles = "bg-slate-900 text-white border-slate-700";
+      let icon = "fa-circle-info text-blue-400";
+
+      if (type === "success") {
+        styles = "bg-emerald-900 text-white border-emerald-700";
+        icon = "fa-circle-check text-emerald-400";
+      } else if (type === "error") {
+        styles = "bg-rose-900 text-white border-rose-700";
+        icon = "fa-triangle-exclamation text-rose-300";
+      }
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold transition-all duration-300 transform translate-y-0 opacity-100 ${styles}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icon} text-base shrink-0"></i>
+        <span class="flex-1 leading-snug">${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
