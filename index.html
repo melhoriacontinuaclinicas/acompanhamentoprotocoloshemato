@@ -3,536 +3,278 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Adesão — Protocolos Ambulatoriais (Hematologia & Arritmologia)</title>
-
-  <!-- Tailwind CSS -->
+  <title>Dashboard de Adesão — Protocolos Ambulatoriais (Hematologia &amp; Arritmologia)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- FontAwesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <!-- SheetJS (XLSX) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            brand: {
-              navy: '#0f172a',
-              blue: '#1e3a8a',
-              orange: '#ea580c',
-              orangeLight: '#f97316',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .glass-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); }
     .dropzone-active { border-color: #f97316 !important; background-color: #fff7ed !important; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-orange-500 selection:text-white">
 
-  <!-- Top Corporate Header -->
   <header class="glass-header text-white shadow-lg sticky top-0 z-30 border-b border-blue-900/60">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-start sm:items-center gap-3.5">
-          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-950/50 shrink-0 border border-orange-400/30">
-            <i class="fa-solid fa-file-waveform text-xl text-white"></i>
-          </div>
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-400/30 rounded-full">
-                Protocolos Ambulatoriais
-              </span>
-              <span id="lastUpdatedBadge" class="text-xs text-slate-300 flex items-center gap-1.5">
-                <i class="fa-regular fa-clock text-orange-400"></i>
-                <span id="lastUpdatedText">Atualizado em 26/11/2026, 09:16 (82 vínculos)</span>
-              </span>
-            </div>
-            <h1 class="text-lg sm:text-2xl font-extrabold tracking-tight text-white mt-0.5">
-              Adesão ao Treinamento: Hematologia e Arritmologia
-            </h1>
-          </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-start sm:items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md shrink-0 border border-orange-400/30">
+          <i class="fa-solid fa-file-waveform text-xl text-white"></i>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2.5 self-start md:self-center">
-          <button onclick="exportCurrentFilteredView()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all shadow-sm active:scale-95">
-            <i class="fa-solid fa-file-excel text-emerald-400"></i>
-            <span>Exportar Visão</span>
-          </button>
-
-          <button onclick="openAdminModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md shadow-orange-950/30 border border-orange-400/30 transition-all active:scale-95">
-            <i id="lockIconHeader" class="fa-solid fa-lock text-xs"></i>
-            <span>Atualizar Planilha</span>
-          </button>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-orange-500/20 text-orange-300 border border-orange-400/30 rounded-full">Protocolos Ambulatoriais</span>
+            <span class="text-xs text-slate-300 flex items-center gap-1.5">
+              <i class="fa-regular fa-clock text-orange-400"></i>
+              <span id="lastUpdatedText">Carregando dados...</span>
+            </span>
+          </div>
+          <h1 class="text-lg sm:text-2xl font-extrabold tracking-tight text-white mt-0.5">Adesão ao Treinamento: Hematologia e Arritmologia</h1>
         </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 self-start md:self-center">
+        <button onclick="exportCurrentFilteredView()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all shadow-sm">
+          <i class="fa-solid fa-file-excel text-emerald-400"></i>
+          <span>Exportar Visão</span>
+        </button>
+        <button onclick="openAdminModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md border border-orange-400/30 transition-all">
+          <i id="lockIconHeader" class="fa-solid fa-lock text-xs"></i>
+          <span>Atualizar Planilha</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Quick Specialty Selector & Active Filter Status -->
+    <!-- Filtros Rápidos -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80">
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
-          <i class="fa-solid fa-stethoscope mr-1 text-slate-400"></i>Especialidade:
-        </span>
-        <button onclick="setQuickSpecialty('ALL')" id="tabSpecALL" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-900 text-white shadow-sm">
-          Todas (<span id="pillCountAll">82</span>)
-        </button>
-        <button onclick="setQuickSpecialty('HEMATOLOGIA')" id="tabSpecHEMA" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
-          <span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>Hematologia (<span id="pillCountHema">72</span>)
-        </button>
-        <button onclick="setQuickSpecialty('ARRITMOLOGIA')" id="tabSpecARRI" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200">
-          <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1.5"></span>Arritmologia (<span id="pillCountArri">10</span>)
-        </button>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1"><i class="fa-solid fa-stethoscope mr-1"></i>Especialidade:</span>
+        <button onclick="setQuickSpecialty('ALL')" id="tabSpecALL" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-white shadow-sm">Todas (<span id="pillCountAll">0</span>)</button>
+        <button onclick="setQuickSpecialty('HEMATOLOGIA')" id="tabSpecHEMA" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"><span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>Hematologia (<span id="pillCountHema">0</span>)</button>
+        <button onclick="setQuickSpecialty('ARRITMOLOGIA')" id="tabSpecARRI" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"><span class="inline-block w-2 h-2 rounded-full bg-indigo-500 mr-1.5"></span>Arritmologia (<span id="pillCountArri">0</span>)</button>
       </div>
-
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1">
-          <i class="fa-solid fa-circle-check mr-1 text-slate-400"></i>Status Rápido:
-        </span>
-        <button onclick="setQuickStatus('ALL')" id="tabStatusALL" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-blue-900 text-white">
-          Todos
-        </button>
-        <button onclick="setQuickStatus('CONCLUIDO')" id="tabStatusCONC" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">
-          Concluídos
-        </button>
-        <button onclick="setQuickStatus('PENDENTE')" id="tabStatusPEND" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">
-          Pendentes
-        </button>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1"><i class="fa-solid fa-circle-check mr-1"></i>Status Rápido:</span>
+        <button onclick="setQuickStatus('ALL')" id="tabStatusALL" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-900 text-white">Todos</button>
+        <button onclick="setQuickStatus('CONCLUIDO')" id="tabStatusCONC" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100">Concluídos</button>
+        <button onclick="setQuickStatus('PENDENTE')" id="tabStatusPEND" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">Pendentes</button>
       </div>
     </div>
 
-    <!-- KPI Cards Grid -->
+    <!-- KPIs -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
-        <div class="absolute -right-4 -top-4 w-20 h-20 bg-slate-100 rounded-full opacity-50 pointer-events-none"></div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Mapeado</span>
-          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-            <i class="fa-solid fa-user-doctor text-sm"></i>
-          </div>
+          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center"><i class="fa-solid fa-user-doctor text-sm"></i></div>
         </div>
         <div class="mt-3">
-          <div class="flex items-baseline gap-2">
-            <h2 id="kpiTotalRecords" class="text-3xl font-extrabold text-slate-900">0</h2>
-            <span class="text-xs font-medium text-slate-500">vínculos</span>
-          </div>
-          <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <i class="fa-solid fa-users text-slate-400"></i>
-            <span id="kpiUniqueProfs" class="font-semibold text-slate-700">0</span> profissionais únicos
-          </p>
+          <div class="flex items-baseline gap-2"><h2 id="kpiTotalRecords" class="text-3xl font-extrabold text-slate-900">0</h2><span class="text-xs font-medium text-slate-500">vínculos</span></div>
+          <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-users text-slate-400 mr-1"></i><span id="kpiUniqueProfs" class="font-semibold text-slate-700">0</span> profissionais únicos</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-200/90 flex flex-col justify-between relative overflow-hidden">
-        <div class="absolute -right-4 -top-4 w-20 h-20 bg-emerald-50 rounded-full opacity-70 pointer-events-none"></div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-emerald-200 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Concluídos</span>
-          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-            <i class="fa-solid fa-check-double text-sm"></i>
-          </div>
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><i class="fa-solid fa-check-double text-sm"></i></div>
         </div>
         <div class="mt-3">
-          <div class="flex items-baseline justify-between">
-            <h2 id="kpiConcluidos" class="text-3xl font-extrabold text-emerald-600">0</h2>
-            <span id="kpiTaxaGlobal" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800">0%</span>
-          </div>
-          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
-            <div id="kpiBarGlobal" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
-          </div>
+          <div class="flex items-baseline justify-between"><h2 id="kpiConcluidos" class="text-3xl font-extrabold text-emerald-600">0</h2><span id="kpiTaxaGlobal" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800">0%</span></div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden"><div id="kpiBarGlobal" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-orange-200/90 flex flex-col justify-between relative overflow-hidden">
-        <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full opacity-70 pointer-events-none"></div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-orange-200 flex flex-col justify-between">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold uppercase tracking-wider text-orange-700">Pendentes</span>
-          <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-            <i class="fa-solid fa-hourglass-half text-sm"></i>
-          </div>
+          <div class="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center"><i class="fa-solid fa-hourglass-half text-sm"></i></div>
         </div>
         <div class="mt-3">
-          <div class="flex items-baseline justify-between">
-            <h2 id="kpiPendentes" class="text-3xl font-extrabold text-orange-600">0</h2>
-            <span id="kpiTaxaPendente" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-orange-100 text-orange-800">0%</span>
-          </div>
-          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
-            <div id="kpiBarPendente" class="bg-orange-500 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
-          </div>
+          <div class="flex items-baseline justify-between"><h2 id="kpiPendentes" class="text-3xl font-extrabold text-orange-600">0</h2><span id="kpiTaxaPendente" class="px-2 py-0.5 rounded-lg text-xs font-extrabold bg-orange-100 text-orange-800">0%</span></div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden"><div id="kpiBarPendente" class="bg-orange-500 h-full rounded-full transition-all duration-500" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-rose-500"></span>Hematologia
-          </span>
-          <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-            <i class="fa-solid fa-droplet text-sm"></i>
-          </div>
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-500"></span>Hematologia</span>
+          <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center"><i class="fa-solid fa-droplet text-sm"></i></div>
         </div>
         <div class="mt-3">
           <div class="flex items-baseline justify-between">
-            <div>
-              <span id="kpiHemaConc" class="text-2xl font-extrabold text-slate-900">0</span>
-              <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiHemaTotal">0</span></span>
-            </div>
+            <div><span id="kpiHemaConc" class="text-2xl font-extrabold text-slate-900">0</span> <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiHemaTotal">0</span></span></div>
             <span id="kpiHemaPerc" class="text-xs font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">0%</span>
           </div>
-          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
-            <div id="kpiBarHema" class="bg-rose-500 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
-          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden"><div id="kpiBarHema" class="bg-rose-500 h-full rounded-full transition-all duration-500" style="width:0%"></div></div>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>Arritmologia
-          </span>
-          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            <i class="fa-solid fa-heart-pulse text-sm"></i>
-          </div>
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-indigo-500"></span>Arritmologia</span>
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-heart-pulse text-sm"></i></div>
         </div>
         <div class="mt-3">
           <div class="flex items-baseline justify-between">
-            <div>
-              <span id="kpiArriConc" class="text-2xl font-extrabold text-slate-900">0</span>
-              <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiArriTotal">0</span></span>
-            </div>
+            <div><span id="kpiArriConc" class="text-2xl font-extrabold text-slate-900">0</span> <span class="text-xs text-slate-400 font-semibold">/ <span id="kpiArriTotal">0</span></span></div>
             <span id="kpiArriPerc" class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">0%</span>
           </div>
-          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden">
-            <div id="kpiBarArri" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
-          </div>
+          <div class="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden"><div id="kpiBarArri" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width:0%"></div></div>
         </div>
       </div>
     </section>
 
-    <!-- Multi-Filter Bar -->
+    <!-- Filtros -->
     <section class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-orange-500"></i>
-          Filtros de Segmentação Analítica
-        </h3>
-        <button onclick="resetAllFilters()" class="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition-colors">
-          <i class="fa-solid fa-rotate-left"></i>
-          Limpar Filtros
-        </button>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2"><i class="fa-solid fa-sliders text-orange-500"></i>Filtros de Segmentação Analítica</h3>
+        <button onclick="resetAllFilters()" class="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"><i class="fa-solid fa-rotate-left"></i>Limpar Filtros</button>
       </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <div class="lg:col-span-2 relative">
+        <div class="lg:col-span-2">
           <label for="filterSearch" class="block text-[11px] font-semibold text-slate-500 mb-1">Buscar Profissional, Clínica ou Filial</label>
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="Ex: João Paulo, São Gabriel, Recife..." class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all">
+            <input type="text" id="filterSearch" oninput="applyFilters()" placeholder="Ex: João Paulo, São Gabriel, Recife..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-orange-500">
           </div>
         </div>
-
         <div>
           <label for="filterUF" class="block text-[11px] font-semibold text-slate-500 mb-1">Estado (UF)</label>
-          <select id="filterUF" onchange="onUFChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"></select>
+          <select id="filterUF" onchange="onUFChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium"></select>
         </div>
-
         <div>
           <label for="filterFilial" class="block text-[11px] font-semibold text-slate-500 mb-1">Filial / Regional</label>
-          <select id="filterFilial" onchange="onFilialChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"></select>
+          <select id="filterFilial" onchange="onFilialChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium"></select>
         </div>
-
         <div>
           <label for="filterUnidade" class="block text-[11px] font-semibold text-slate-500 mb-1">Unidade Ambulatorial</label>
-          <select id="filterUnidade" onchange="applyFilters()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500 transition-all"></select>
+          <select id="filterUnidade" onchange="applyFilters()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-medium"></select>
         </div>
       </div>
     </section>
 
-    <!-- Visual Charts -->
+    <!-- Gráficos -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-              <i class="fa-solid fa-map-location-dot text-blue-800"></i>
-              Volume e Adesão por Estado (UF)
-            </h3>
-            <p class="text-xs text-slate-500">Comparativo de treinamentos concluídos vs. pendentes em cada UF</p>
-          </div>
-          <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 self-start sm:self-auto">
-            Clique em uma barra para filtrar a UF
-          </span>
-        </div>
-        <div class="relative w-full h-72 sm:h-80">
-          <canvas id="chartUF"></canvas>
-        </div>
+      <div class="lg:col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-1"><i class="fa-solid fa-map-location-dot text-blue-800"></i>Volume e Adesão por Estado (UF)</h3>
+        <p class="text-xs text-slate-500 mb-4">Clique em uma barra para filtrar a UF</p>
+        <div class="relative w-full h-72 sm:h-80"><canvas id="chartUF"></canvas></div>
       </div>
-
       <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between">
-        <div class="mb-4">
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-orange-500"></i>
-            Proporção por Especialidade e Status
-          </h3>
-          <p class="text-xs text-slate-500">Distribuição consolidada conforme filtros ativos</p>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-1"><i class="fa-solid fa-chart-pie text-orange-500"></i>Proporção por Especialidade e Status</h3>
+          <p class="text-xs text-slate-500 mb-4">Distribuição consolidada conforme filtros ativos</p>
         </div>
-        <div class="relative w-full h-60 flex items-center justify-center">
-          <canvas id="chartSpecialty"></canvas>
-        </div>
+        <div class="relative w-full h-60 flex items-center justify-center"><canvas id="chartSpecialty"></canvas></div>
         <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-100">
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
             <span class="text-[11px] font-bold uppercase text-slate-400 block">Unidades Atendidas</span>
-            <span id="statUnidadesCount" class="text-lg font-extrabold text-slate-800">0</span>
-            <span class="text-xs text-slate-500 ml-1">clínicas</span>
+            <span id="statUnidadesCount" class="text-lg font-extrabold text-slate-800">0</span> <span class="text-xs text-slate-500">clínicas</span>
           </div>
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
             <span class="text-[11px] font-bold uppercase text-slate-400 block">Estados (UFs)</span>
-            <span id="statUFsCount" class="text-lg font-extrabold text-slate-800">0</span>
-            <span class="text-xs text-slate-500 ml-1">estados</span>
+            <span id="statUFsCount" class="text-lg font-extrabold text-slate-800">0</span> <span class="text-xs text-slate-500">estados</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Ranking de Adesão por Unidade -->
+    <!-- Unidades -->
     <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-hospital-user text-orange-500"></i>
-            Acompanhamento por Unidade Ambulatorial
-          </h3>
-          <p class="text-xs text-slate-500">Progresso de conclusão por clínica/unidade (clique em uma unidade para filtrar a tabela abaixo)</p>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-hospital-user text-orange-500"></i>Acompanhamento por Unidade Ambulatorial</h3>
+          <p class="text-xs text-slate-500">Clique em uma unidade para filtrar a tabela abaixo</p>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-slate-500">Ordenar por:</span>
-          <select id="sortUnidadesMode" onchange="renderUnidadesProgress()" class="px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none">
-            <option value="VOLUME">Maior Volume de Profissionais</option>
-            <option value="ADESAO_DESC">Maior % de Adesão</option>
-            <option value="PENDENTES_DESC">Mais Pendentes</option>
-          </select>
-        </div>
+        <select id="sortUnidadesMode" onchange="renderUnidadesProgress()" class="px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
+          <option value="VOLUME">Maior Volume</option>
+          <option value="ADESAO_DESC">Maior % de Adesão</option>
+          <option value="PENDENTES_DESC">Mais Pendentes</option>
+        </select>
       </div>
       <div id="unidadesProgressContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-1"></div>
     </section>
 
-    <!-- Detailed Professionals Table -->
+    <!-- Tabela -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-      <div class="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-table-list text-blue-900"></i>
-            Relação Nominal de Profissionais (<span id="tableCountBadge">0</span> registros)
-          </h3>
-          <p class="text-xs text-slate-500">Detalhamento completo da aba ACOMPANHAMENTO com status individualizado</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-medium text-slate-500">Dica: Clique no cabeçalho para ordenar</span>
-        </div>
+      <div class="p-5 border-b border-slate-200/80">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-table-list text-blue-900"></i>Relação Nominal de Profissionais (<span id="tableCountBadge">0</span> registros)</h3>
       </div>
-
       <div class="overflow-x-auto max-h-[540px] overflow-y-auto">
         <table class="w-full text-left border-collapse">
-          <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 select-none">
+          <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
             <tr>
-              <th onclick="sortTableBy('UF')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center gap-1.5">UF <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
-              <th onclick="sortTableBy('Filial')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center gap-1.5">Filial <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
-              <th onclick="sortTableBy('Unidade')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center gap-1.5">Unidade <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
-              <th onclick="sortTableBy('Especialidades')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center gap-1.5">Especialidade <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
-              <th onclick="sortTableBy('Profissional')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center gap-1.5">Profissional <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
-              <th onclick="sortTableBy('STATUS TREINAMENTO')" class="py-3.5 px-4 text-center cursor-pointer hover:bg-slate-100 transition-colors">
-                <div class="flex items-center justify-center gap-1.5">Status Treinamento <i class="fa-solid fa-sort text-slate-300"></i></div>
-              </th>
+              <th onclick="sortTableBy('UF')" class="py-3.5 px-4 cursor-pointer">UF</th>
+              <th onclick="sortTableBy('Filial')" class="py-3.5 px-4 cursor-pointer">Filial</th>
+              <th onclick="sortTableBy('Unidade')" class="py-3.5 px-4 cursor-pointer">Unidade</th>
+              <th onclick="sortTableBy('Especialidades')" class="py-3.5 px-4 cursor-pointer">Especialidade</th>
+              <th onclick="sortTableBy('Profissional')" class="py-3.5 px-4 cursor-pointer">Profissional</th>
+              <th onclick="sortTableBy('STATUS TREINAMENTO')" class="py-3.5 px-4 text-center cursor-pointer">Status</th>
             </tr>
           </thead>
           <tbody id="professionalsTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
         </table>
       </div>
-
       <div id="tableEmptyState" class="hidden py-12 text-center">
-        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-          <i class="fa-solid fa-magnifying-glass-minus text-lg"></i>
-        </div>
-        <p class="text-sm font-bold text-slate-700">Nenhum registro encontrado com os filtros selecionados</p>
-        <p class="text-xs text-slate-500 mt-1">Tente limpar os filtros ou ajustar os termos da busca.</p>
-        <button onclick="resetAllFilters()" class="mt-3 px-4 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all">
-          Restaurar Todos os Registros
-        </button>
+        <p class="text-sm font-bold text-slate-700">Nenhum registro encontrado</p>
+        <button onclick="resetAllFilters()" class="mt-3 px-4 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white">Restaurar Todos</button>
       </div>
     </section>
-
   </main>
-
-  <footer class="bg-white border-t border-slate-200/80 mt-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-        <span>Painel de Monitoramento — Protocolos Ambulatoriais (Hematologia & Arritmologia)</span>
-      </div>
-      <div>
-        <span>Atualização protegida por senha • Compatível com arquivos <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">.xlsx</code></span>
-      </div>
-    </div>
-  </footer>
 
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- MODAL DE ADMINISTRAÇÃO (FECHADO E BLOQUEADO POR PADRÃO) -->
-  <div id="adminModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+  <!-- MODAL ADMIN -->
+  <div id="adminModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
       <div class="glass-header px-6 py-5 text-white flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-400/40 flex items-center justify-center text-orange-300">
-            <i id="modalHeaderIcon" class="fa-solid fa-shield-halved text-lg"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-white">Atualizar Planilha de Acompanhamento</h3>
-            <p class="text-xs text-slate-300">Área restrita ao administrador do painel</p>
-          </div>
-        </div>
-        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200 transition-colors">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- STEP 1: Senha -->
-      <div id="adminLockView" class="p-6 space-y-4">
-        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3">
-          <i class="fa-solid fa-lock text-orange-600 mt-0.5"></i>
-          <div class="text-xs text-slate-700 leading-relaxed">
-            Esta funcionalidade é restrita. Para enviar uma nova cópia da planilha de acompanhamento (<strong class="font-bold">.xlsx</strong>), insira sua credencial de administrador abaixo.
-          </div>
-        </div>
-
         <div>
-          <label for="adminPasswordInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-            Senha do Administrador
-          </label>
-          <div class="relative">
-            <input type="password" id="adminPasswordInput" autocomplete="off" onkeydown="if(event.key === 'Enter') verifyAdminPassword()" placeholder="Digite a senha de acesso..." class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
-            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-              <i id="eyeIcon" class="fa-regular fa-eye"></i>
-            </button>
-          </div>
-          <p id="passwordErrorMsg" class="text-xs font-semibold text-rose-600 mt-2 flex items-center gap-1.5 hidden">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <span>Senha incorreta. Acesso negado.</span>
-          </p>
+          <h3 class="text-base font-bold text-white">Atualizar Planilha de Acompanhamento</h3>
+          <p class="text-xs text-slate-300">Área restrita — atualiza online para todos</p>
         </div>
+        <button onclick="closeAdminModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+      </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button onclick="closeAdminModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-            Cancelar
-          </button>
-          <button onclick="verifyAdminPassword()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md transition-all flex items-center gap-2">
-            <i class="fa-solid fa-unlock-keyhole"></i>
-            <span>Desbloquear Upload</span>
-          </button>
+      <div id="adminLockView" class="p-6 space-y-4">
+        <div>
+          <label for="adminPasswordInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Senha do Administrador</label>
+          <input type="password" id="adminPasswordInput" onkeydown="if(event.key==='Enter') verifyAdminPassword()" placeholder="Digite a senha..." class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm">
+          <p id="passwordErrorMsg" class="text-xs font-semibold text-rose-600 mt-2 hidden">Senha incorreta.</p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="closeAdminModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+          <button onclick="verifyAdminPassword()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white">Desbloquear</button>
         </div>
       </div>
 
-      <!-- STEP 2: Upload -->
-      <div id="adminUnlockedView" class="hidden p-6 space-y-5">
-        <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl">
-          <div class="flex items-center gap-2 text-xs font-bold text-emerald-800">
-            <i class="fa-solid fa-circle-check text-emerald-600"></i>
-            <span>Modo Administrador Desbloqueado</span>
-          </div>
-          <button onclick="lockAdminSession()" class="text-[11px] font-semibold text-emerald-700 hover:underline">
-            Bloquear novamente
-          </button>
-        </div>
-
-        <div id="excelDropzone" onclick="document.getElementById('excelFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/70 hover:bg-orange-50/30 rounded-2xl p-6 text-center cursor-pointer transition-all group">
+      <div id="adminUnlockedView" class="hidden p-6 space-y-4">
+        <div id="excelDropzone" onclick="document.getElementById('excelFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50 rounded-2xl p-6 text-center cursor-pointer">
           <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)" class="hidden">
-          <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
-            <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-          </div>
-          <p class="text-sm font-bold text-slate-800">
-            Clique para selecionar ou arraste a cópia da planilha aqui
-          </p>
-          <p class="text-xs text-slate-500 mt-1">
-            Suporta <code class="font-semibold text-slate-700">.xlsx</code>, <code class="font-semibold text-slate-700">.xls</code> ou <code class="font-semibold text-slate-700">.csv</code> (aba <strong class="text-slate-700">ACOMPANHAMENTO</strong>)
-          </p>
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-orange-500 mb-2"></i>
+          <p class="text-sm font-bold text-slate-800">Clique ou arraste a planilha atualizada aqui</p>
+          <p class="text-xs text-slate-500 mt-1">Suporta .xlsx, .xls ou .csv (aba ACOMPANHAMENTO)</p>
         </div>
-
-        <div id="uploadFeedbackBox" class="hidden rounded-2xl p-4 bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-2">
-          <div class="flex items-center justify-between font-bold">
-            <span id="uploadFileName"></span>
-            <span id="uploadRecordCount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-800"></span>
-          </div>
-          <p class="text-[11px] text-blue-700">
-            Os dados foram atualizados no seu navegador. Para atualizar no GitHub sem banco de dados, baixe o HTML abaixo e substitua o <code>index.html</code>:
-          </p>
-          <button onclick="downloadStandaloneUpdatedHTML()" class="w-full py-2.5 px-4 rounded-xl bg-blue-900 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all">
-            <i class="fa-solid fa-download"></i>
-            <span>Baixar index.html Atualizado</span>
-          </button>
-        </div>
-
-        <div class="pt-3 border-t border-slate-200 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <button onclick="togglePasswordChangeSection()" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
-              <i class="fa-solid fa-key text-orange-500"></i>
-              <span>Alterar Senha de Proteção</span>
-            </button>
-            <button onclick="restoreEmbeddedDataset()" class="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5">
-              <i class="fa-solid fa-rotate-left"></i>
-              <span>Restaurar Base Original</span>
-            </button>
-          </div>
-
-          <div id="changePasswordBox" class="hidden bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
-            <label class="block text-[11px] font-bold uppercase text-slate-500">Definir Nova Senha do Botão</label>
-            <div class="flex gap-2">
-              <input type="password" id="newAdminPasswordInput" autocomplete="new-password" placeholder="Digite a nova senha..." class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-orange-500">
-              <button onclick="saveNewAdminPassword()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all">
-                Salvar Senha
-              </button>
-            </div>
-          </div>
+        <div id="uploadFeedbackBox" class="hidden rounded-2xl p-4 bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+          <div class="flex justify-between font-bold"><span id="uploadFileName"></span><span id="uploadRecordCount"></span></div>
+          <p class="mt-1 text-emerald-700">Sincronizado no Supabase! Todos já veem os números atualizados.</p>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    /*__EMBEDDED_DATA_START__*/
+    const SUPABASE_URL = "https://mlvdgmvmuzbcughekpiz.supabase.co/rest/v1/protocolos_dashboard_state";
+    const SUPABASE_KEY = "sb_publishable_04TgybpwC683g-FRmfFLBg_2qwAVVzl";
+    const ADMIN_TOKEN = "YWRtaW4yMDI2"; // admin2026
+
     const INITIAL_EMBEDDED_DATA = [
       {"UF":"SP","Filial":"SÃO JOSE DOS CAMPOS","Unidade":"CENTRO MEDICO ESPECIALIDADES","Especialidades":"HEMATOLOGIA","Profissional":"ANA ALICE MONTEIRO ZUNG","STATUS TREINAMENTO":"CONCLUIDO"},
       {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"ANA DULCE LIMA DE LUNA FREIRE","STATUS TREINAMENTO":"PENDENTE"},
@@ -617,13 +359,6 @@
       {"UF":"MG","Filial":"BELO HORIZONTE - NDI MINAS","Unidade":"ONCOLOGIA AUGUSTO DE LIMA","Especialidades":"HEMATOLOGIA","Profissional":"VANESSA DE LUCAS OLIVEIRA","STATUS TREINAMENTO":"PENDENTE"},
       {"UF":"PE","Filial":"RECIFE","Unidade":"CLÍNICA HEMATOLOGIA E ONCOLOGIA","Especialidades":"HEMATOLOGIA","Profissional":"VIVIANE CUNHA CAIXETA GODOY","STATUS TREINAMENTO":"PENDENTE"}
     ];
-    let DEFAULT_ADMIN_TOKEN = "YWRtaW4yMDI2";
-    let EMBEDDED_LAST_UPDATE = "Atualizado em 26/11/2026, 09:16 (82 vínculos)";
-    /*__EMBEDDED_DATA_END__*/
-
-    const STORAGE_KEY_DATA = "protocolos_dashboard_data_v1";
-    const STORAGE_KEY_META = "protocolos_dashboard_meta_v1";
-    const STORAGE_KEY_PASS = "protocolos_dashboard_token_v1";
 
     let rawDataset = [];
     let filteredDataset = [];
@@ -632,88 +367,106 @@
     let currentSortColumn = "UF";
     let currentSortAsc = true;
     let isAdminUnlocked = false;
-
     let chartUFInstance = null;
     let chartSpecialtyInstance = null;
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadDatasetFromStorageOrDefault();
+    window.addEventListener("DOMContentLoaded", async () => {
+      await loadDatasetFromSupabase();
       populateUFDropdown();
       populateFilialDropdown();
       populateUnidadeDropdown();
       applyFilters();
     });
 
-    function loadDatasetFromStorageOrDefault() {
+    async function loadDatasetFromSupabase() {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
       try {
-        const savedData = localStorage.getItem(STORAGE_KEY_DATA);
-        const savedMeta = localStorage.getItem(STORAGE_KEY_META);
-        if (savedData) {
-          const parsed = JSON.parse(savedData);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            rawDataset = parsed;
-            document.getElementById("lastUpdatedText").textContent = savedMeta || "Planilha Atualizada Localmente";
+        const res = await fetch(`${SUPABASE_URL}?id=eq.1&select=dados,meta_texto`, {
+          method: "GET",
+          headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+        if (res.ok) {
+          const rows = await res.json();
+          if (rows.length > 0 && Array.isArray(rows[0].dados) && rows[0].dados.length > 0) {
+            rawDataset = rows[0].dados;
+            document.getElementById("lastUpdatedText").textContent = rows[0].meta_texto || `Sincronizado (${rawDataset.length} vínculos)`;
             return;
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        clearTimeout(timer);
+        console.warn("Usando base inicial:", err);
+      }
       rawDataset = JSON.parse(JSON.stringify(INITIAL_EMBEDDED_DATA));
-      document.getElementById("lastUpdatedText").textContent = EMBEDDED_LAST_UPDATE;
+      document.getElementById("lastUpdatedText").textContent = "Base Inicial (82 vínculos)";
+    }
+
+    async function saveDatasetToSupabase(records, metaLabel) {
+      const res = await fetch(`${SUPABASE_URL}?on_conflict=id`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "resolution=merge-duplicates"
+        },
+        body: JSON.stringify({ id: 1, dados: records, meta_texto: metaLabel, updated_at: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error(await res.text());
     }
 
     function encodeToken(str) {
       try { return btoa(unescape(encodeURIComponent(str))); } catch (e) { return str; }
     }
 
-    function getAdminToken() {
-      try { return localStorage.getItem(STORAGE_KEY_PASS) || DEFAULT_ADMIN_TOKEN; } catch (e) { return DEFAULT_ADMIN_TOKEN; }
-    }
-
     function setQuickSpecialty(spec) {
       activeSpecialty = spec;
-      document.getElementById("tabSpecALL").className = spec === "ALL" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-slate-900 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
-      document.getElementById("tabSpecHEMA").className = spec === "HEMATOLOGIA" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-rose-600 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
-      document.getElementById("tabSpecARRI").className = spec === "ARRITMOLOGIA" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200";
+      document.getElementById("tabSpecALL").className = spec === "ALL" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-900 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200";
+      document.getElementById("tabSpecHEMA").className = spec === "HEMATOLOGIA" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-600 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200";
+      document.getElementById("tabSpecARRI").className = spec === "ARRITMOLOGIA" ? "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm" : "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200";
       applyFilters();
     }
 
     function setQuickStatus(status) {
       activeStatus = status;
-      document.getElementById("tabStatusALL").className = status === "ALL" ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-blue-900 text-white shadow-sm" : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200";
-      document.getElementById("tabStatusCONC").className = status === "CONCLUIDO" ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm" : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100";
-      document.getElementById("tabStatusPEND").className = status === "PENDENTE" ? "px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-orange-600 text-white shadow-sm" : "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100";
+      document.getElementById("tabStatusALL").className = status === "ALL" ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-900 text-white" : "px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200";
+      document.getElementById("tabStatusCONC").className = status === "CONCLUIDO" ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white" : "px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+      document.getElementById("tabStatusPEND").className = status === "PENDENTE" ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-600 text-white" : "px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200";
       applyFilters();
     }
 
     function populateUFDropdown() {
-      const ufSelect = document.getElementById("filterUF");
-      const currentVal = ufSelect.value || "ALL";
+      const sel = document.getElementById("filterUF");
+      const cur = sel.value || "ALL";
       const ufs = [...new Set(rawDataset.map(r => r.UF).filter(Boolean))].sort();
-      ufSelect.innerHTML = `<option value="ALL">Todas as UFs (${ufs.length})</option>` + ufs.map(uf => `<option value="${uf}">${uf} (${rawDataset.filter(r => r.UF === uf).length})</option>`).join("");
-      if (ufs.includes(currentVal)) ufSelect.value = currentVal;
+      sel.innerHTML = `<option value="ALL">Todas as UFs (${ufs.length})</option>` + ufs.map(u => `<option value="${u}">${u} (${rawDataset.filter(r => r.UF === u).length})</option>`).join("");
+      if (ufs.includes(cur)) sel.value = cur;
     }
 
     function populateFilialDropdown() {
-      const ufVal = document.getElementById("filterUF").value;
-      const filialSelect = document.getElementById("filterFilial");
-      const currentVal = filialSelect.value || "ALL";
-      const subset = ufVal === "ALL" ? rawDataset : rawDataset.filter(r => r.UF === ufVal);
-      const filiais = [...new Set(subset.map(r => r.Filial).filter(Boolean))].sort();
-      filialSelect.innerHTML = `<option value="ALL">Todas as Filiais (${filiais.length})</option>` + filiais.map(f => `<option value="${f}">${f} (${subset.filter(r => r.Filial === f).length})</option>`).join("");
-      filialSelect.value = filiais.includes(currentVal) ? currentVal : "ALL";
+      const uf = document.getElementById("filterUF").value;
+      const sel = document.getElementById("filterFilial");
+      const cur = sel.value || "ALL";
+      const sub = uf === "ALL" ? rawDataset : rawDataset.filter(r => r.UF === uf);
+      const list = [...new Set(sub.map(r => r.Filial).filter(Boolean))].sort();
+      sel.innerHTML = `<option value="ALL">Todas as Filiais (${list.length})</option>` + list.map(f => `<option value="${f}">${f} (${sub.filter(r => r.Filial === f).length})</option>`).join("");
+      sel.value = list.includes(cur) ? cur : "ALL";
     }
 
     function populateUnidadeDropdown() {
-      const ufVal = document.getElementById("filterUF").value;
-      const filialVal = document.getElementById("filterFilial").value;
-      const unidadeSelect = document.getElementById("filterUnidade");
-      const currentVal = unidadeSelect.value || "ALL";
-      let subset = rawDataset;
-      if (ufVal !== "ALL") subset = subset.filter(r => r.UF === ufVal);
-      if (filialVal !== "ALL") subset = subset.filter(r => r.Filial === filialVal);
-      const unidades = [...new Set(subset.map(r => r.Unidade).filter(Boolean))].sort();
-      unidadeSelect.innerHTML = `<option value="ALL">Todas as Unidades (${unidades.length})</option>` + unidades.map(u => `<option value="${u}">${u} (${subset.filter(r => r.Unidade === u).length})</option>`).join("");
-      unidadeSelect.value = unidades.includes(currentVal) ? currentVal : "ALL";
+      const uf = document.getElementById("filterUF").value;
+      const fil = document.getElementById("filterFilial").value;
+      const sel = document.getElementById("filterUnidade");
+      const cur = sel.value || "ALL";
+      let sub = rawDataset;
+      if (uf !== "ALL") sub = sub.filter(r => r.UF === uf);
+      if (fil !== "ALL") sub = sub.filter(r => r.Filial === fil);
+      const list = [...new Set(sub.map(r => r.Unidade).filter(Boolean))].sort();
+      sel.innerHTML = `<option value="ALL">Todas as Unidades (${list.length})</option>` + list.map(u => `<option value="${u}">${u} (${sub.filter(r => r.Unidade === u).length})</option>`).join("");
+      sel.value = list.includes(cur) ? cur : "ALL";
     }
 
     function onUFChange() { populateFilialDropdown(); populateUnidadeDropdown(); applyFilters(); }
@@ -726,29 +479,25 @@
       populateUnidadeDropdown();
       setQuickSpecialty("ALL");
       setQuickStatus("ALL");
-      showToast("Filtros restaurados para a visão completa.", "info");
     }
 
     function applyFilters() {
-      const searchVal = (document.getElementById("filterSearch").value || "").trim().toUpperCase();
-      const ufVal = document.getElementById("filterUF").value;
-      const filialVal = document.getElementById("filterFilial").value;
-      const unidadeVal = document.getElementById("filterUnidade").value;
+      const search = (document.getElementById("filterSearch").value || "").trim().toUpperCase();
+      const uf = document.getElementById("filterUF").value;
+      const fil = document.getElementById("filterFilial").value;
+      const uni = document.getElementById("filterUnidade").value;
 
       document.getElementById("pillCountAll").textContent = rawDataset.length;
       document.getElementById("pillCountHema").textContent = rawDataset.filter(r => r.Especialidades === "HEMATOLOGIA").length;
       document.getElementById("pillCountArri").textContent = rawDataset.filter(r => r.Especialidades === "ARRITMOLOGIA").length;
 
-      filteredDataset = rawDataset.filter(row => {
-        if (activeSpecialty !== "ALL" && row.Especialidades !== activeSpecialty) return false;
-        if (activeStatus !== "ALL" && row["STATUS TREINAMENTO"] !== activeStatus) return false;
-        if (ufVal !== "ALL" && row.UF !== ufVal) return false;
-        if (filialVal !== "ALL" && row.Filial !== filialVal) return false;
-        if (unidadeVal !== "ALL" && row.Unidade !== unidadeVal) return false;
-        if (searchVal) {
-          const hay = `${row.Profissional} ${row.Unidade} ${row.Filial} ${row.UF} ${row.Especialidades}`.toUpperCase();
-          if (!hay.includes(searchVal)) return false;
-        }
+      filteredDataset = rawDataset.filter(r => {
+        if (activeSpecialty !== "ALL" && r.Especialidades !== activeSpecialty) return false;
+        if (activeStatus !== "ALL" && r["STATUS TREINAMENTO"] !== activeStatus) return false;
+        if (uf !== "ALL" && r.UF !== uf) return false;
+        if (fil !== "ALL" && r.Filial !== fil) return false;
+        if (uni !== "ALL" && r.Unidade !== uni) return false;
+        if (search && !`${r.Profissional} ${r.Unidade} ${r.Filial} ${r.UF}`.toUpperCase().includes(search)) return false;
         return true;
       });
 
@@ -760,245 +509,157 @@
 
     function updateKPICards() {
       const total = filteredDataset.length;
-      const uniqueProfs = new Set(filteredDataset.map(r => r.Profissional)).size;
-      const concluidos = filteredDataset.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
-      const pendentes = total - concluidos;
-      const taxaGlobal = total > 0 ? ((concluidos / total) * 100).toFixed(1) : "0.0";
-      const taxaPend = total > 0 ? ((pendentes / total) * 100).toFixed(1) : "0.0";
+      const conc = filteredDataset.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const pend = total - conc;
+      const pConc = total ? ((conc / total) * 100).toFixed(1) : "0.0";
+      const pPend = total ? ((pend / total) * 100).toFixed(1) : "0.0";
 
       document.getElementById("kpiTotalRecords").textContent = total;
-      document.getElementById("kpiUniqueProfs").textContent = uniqueProfs;
-      document.getElementById("kpiConcluidos").textContent = concluidos;
-      document.getElementById("kpiTaxaGlobal").textContent = `${taxaGlobal}%`;
-      document.getElementById("kpiBarGlobal").style.width = `${taxaGlobal}%`;
-      document.getElementById("kpiPendentes").textContent = pendentes;
-      document.getElementById("kpiTaxaPendente").textContent = `${taxaPend}%`;
-      document.getElementById("kpiBarPendente").style.width = `${taxaPend}%`;
+      document.getElementById("kpiUniqueProfs").textContent = new Set(filteredDataset.map(r => r.Profissional)).size;
+      document.getElementById("kpiConcluidos").textContent = conc;
+      document.getElementById("kpiTaxaGlobal").textContent = `${pConc}%`;
+      document.getElementById("kpiBarGlobal").style.width = `${pConc}%`;
+      document.getElementById("kpiPendentes").textContent = pend;
+      document.getElementById("kpiTaxaPendente").textContent = `${pPend}%`;
+      document.getElementById("kpiBarPendente").style.width = `${pPend}%`;
 
-      const hemaRows = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA");
-      const hemaConc = hemaRows.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
-      const hemaPerc = hemaRows.length > 0 ? ((hemaConc / hemaRows.length) * 100).toFixed(1) : "0.0";
-      document.getElementById("kpiHemaConc").textContent = hemaConc;
-      document.getElementById("kpiHemaTotal").textContent = hemaRows.length;
-      document.getElementById("kpiHemaPerc").textContent = `${hemaPerc}%`;
-      document.getElementById("kpiBarHema").style.width = `${hemaPerc}%`;
+      const hema = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA");
+      const hConc = hema.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const hPerc = hema.length ? ((hConc / hema.length) * 100).toFixed(1) : "0.0";
+      document.getElementById("kpiHemaConc").textContent = hConc;
+      document.getElementById("kpiHemaTotal").textContent = hema.length;
+      document.getElementById("kpiHemaPerc").textContent = `${hPerc}%`;
+      document.getElementById("kpiBarHema").style.width = `${hPerc}%`;
 
-      const arriRows = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA");
-      const arriConc = arriRows.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
-      const arriPerc = arriRows.length > 0 ? ((arriConc / arriRows.length) * 100).toFixed(1) : "0.0";
-      document.getElementById("kpiArriConc").textContent = arriConc;
-      document.getElementById("kpiArriTotal").textContent = arriRows.length;
-      document.getElementById("kpiArriPerc").textContent = `${arriPerc}%`;
-      document.getElementById("kpiBarArri").style.width = `${arriPerc}%`;
+      const arri = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA");
+      const aConc = arri.filter(r => r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const aPerc = arri.length ? ((aConc / arri.length) * 100).toFixed(1) : "0.0";
+      document.getElementById("kpiArriConc").textContent = aConc;
+      document.getElementById("kpiArriTotal").textContent = arri.length;
+      document.getElementById("kpiArriPerc").textContent = `${aPerc}%`;
+      document.getElementById("kpiBarArri").style.width = `${aPerc}%`;
 
       document.getElementById("statUnidadesCount").textContent = new Set(filteredDataset.map(r => r.Unidade)).size;
       document.getElementById("statUFsCount").textContent = new Set(filteredDataset.map(r => r.UF)).size;
     }
 
-    function renderCharts() { renderUFChart(); renderSpecialtyChart(); }
-
-    function renderUFChart() {
-      const ctx = document.getElementById("chartUF").getContext("2d");
+    function renderCharts() {
       const ufStats = {};
       filteredDataset.forEach(r => {
-        const uf = r.UF || "N/A";
-        if (!ufStats[uf]) ufStats[uf] = { concluido: 0, pendente: 0, total: 0 };
-        ufStats[uf].total++;
-        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") ufStats[uf].concluido++;
-        else ufStats[uf].pendente++;
+        const u = r.UF || "N/A";
+        if (!ufStats[u]) ufStats[u] = { c: 0, p: 0, t: 0 };
+        ufStats[u].t++;
+        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") ufStats[u].c++; else ufStats[u].p++;
       });
-
-      const sortedUFs = Object.keys(ufStats).sort((a, b) => ufStats[b].total - ufStats[a].total);
+      const ufs = Object.keys(ufStats).sort((a, b) => ufStats[b].t - ufStats[a].t);
       if (chartUFInstance) chartUFInstance.destroy();
-
-      chartUFInstance = new Chart(ctx, {
+      chartUFInstance = new Chart(document.getElementById("chartUF"), {
         type: "bar",
         data: {
-          labels: sortedUFs,
+          labels: ufs,
           datasets: [
-            { label: "Concluído", data: sortedUFs.map(uf => ufStats[uf].concluido), backgroundColor: "#10b981", borderRadius: 6, barPercentage: 0.68 },
-            { label: "Pendente", data: sortedUFs.map(uf => ufStats[uf].pendente), backgroundColor: "#f97316", borderRadius: 6, barPercentage: 0.68 }
+            { label: "Concluído", data: ufs.map(u => ufStats[u].c), backgroundColor: "#10b981", borderRadius: 6 },
+            { label: "Pendente", data: ufs.map(u => ufStats[u].p), backgroundColor: "#f97316", borderRadius: 6 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          onClick: (evt, elements) => {
-            if (elements.length > 0) {
-              const clickedUF = sortedUFs[elements[0].index];
-              const ufSelect = document.getElementById("filterUF");
-              ufSelect.value = ufSelect.value === clickedUF ? "ALL" : clickedUF;
-              onUFChange();
-            }
-          },
-          plugins: {
-            legend: { position: "top", align: "end", labels: { usePointStyle: true, boxWidth: 8, font: { family: "Inter", size: 11, weight: "600" } } },
-            tooltip: {
-              backgroundColor: "#0f172a", padding: 12, cornerRadius: 10,
-              callbacks: {
-                afterBody: (items) => {
-                  const st = ufStats[sortedUFs[items[0].dataIndex]];
-                  const perc = st.total > 0 ? ((st.concluido / st.total) * 100).toFixed(1) : "0.0";
-                  return `Total na UF: ${st.total}\nTaxa de Adesão: ${perc}%`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: { stacked: true, grid: { display: false }, ticks: { font: { family: "Inter", size: 11, weight: "700" }, color: "#334155" } },
-            y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { family: "Inter", size: 11 }, color: "#64748b" }, grid: { color: "#f1f5f9" } }
-          }
+          responsive: true, maintainAspectRatio: false,
+          onClick: (e, el) => { if (el.length) { const u = ufs[el[0].index]; const s = document.getElementById("filterUF"); s.value = s.value === u ? "ALL" : u; onUFChange(); } },
+          scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
         }
       });
-    }
 
-    function renderSpecialtyChart() {
-      const ctx = document.getElementById("chartSpecialty").getContext("2d");
-      const hemaConc = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
-      const hemaPend = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
-      const arriConc = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
-      const arriPend = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
-
+      const hC = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const hP = filteredDataset.filter(r => r.Especialidades === "HEMATOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
+      const aC = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] === "CONCLUIDO").length;
+      const aP = filteredDataset.filter(r => r.Especialidades === "ARRITMOLOGIA" && r["STATUS TREINAMENTO"] !== "CONCLUIDO").length;
       if (chartSpecialtyInstance) chartSpecialtyInstance.destroy();
-
-      chartSpecialtyInstance = new Chart(ctx, {
+      chartSpecialtyInstance = new Chart(document.getElementById("chartSpecialty"), {
         type: "doughnut",
         data: {
-          labels: ["Hematologia (Concluído)", "Hematologia (Pendente)", "Arritmologia (Concluído)", "Arritmologia (Pendente)"],
-          datasets: [{ data: [hemaConc, hemaPend, arriConc, arriPend], backgroundColor: ["#10b981", "#f43f5e", "#06b6d4", "#6366f1"], borderWidth: 2, borderColor: "#ffffff", hoverOffset: 6 }]
+          labels: ["Hemato (Conc.)", "Hemato (Pend.)", "Arritmo (Conc.)", "Arritmo (Pend.)"],
+          datasets: [{ data: [hC, hP, aC, aP], backgroundColor: ["#10b981", "#f43f5e", "#06b6d4", "#6366f1"], borderWidth: 2, borderColor: "#fff" }]
         },
-        options: {
-          responsive: true, maintainAspectRatio: false, cutout: "64%",
-          plugins: {
-            legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, padding: 12, font: { family: "Inter", size: 11, weight: "600" } } },
-            tooltip: { backgroundColor: "#0f172a", padding: 12, cornerRadius: 10 }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, cutout: "64%", plugins: { legend: { position: "bottom" } } }
       });
     }
 
     function renderUnidadesProgress() {
       const container = document.getElementById("unidadesProgressContainer");
-      const sortMode = document.getElementById("sortUnidadesMode").value;
-      const mapUni = {};
+      const mode = document.getElementById("sortUnidadesMode").value;
+      const map = {};
       filteredDataset.forEach(r => {
-        const key = r.Unidade || "UNIDADE NÃO INFORMADA";
-        if (!mapUni[key]) mapUni[key] = { unidade: key, uf: r.UF, filial: r.Filial, total: 0, concluidos: 0, pendentes: 0 };
-        mapUni[key].total++;
-        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") mapUni[key].concluidos++;
-        else mapUni[key].pendentes++;
+        const k = r.Unidade || "NÃO INFORMADA";
+        if (!map[k]) map[k] = { unidade: k, uf: r.UF, filial: r.Filial, total: 0, c: 0, p: 0 };
+        map[k].total++;
+        if (r["STATUS TREINAMENTO"] === "CONCLUIDO") map[k].c++; else map[k].p++;
       });
+      let list = Object.values(map).map(x => ({ ...x, perc: x.total ? (x.c / x.total) * 100 : 0 }));
+      if (mode === "VOLUME") list.sort((a, b) => b.total - a.total);
+      else if (mode === "ADESAO_DESC") list.sort((a, b) => b.perc - a.perc);
+      else list.sort((a, b) => b.p - a.p);
 
-      let list = Object.values(mapUni).map(item => ({ ...item, perc: item.total > 0 ? (item.concluidos / item.total) * 100 : 0 }));
-      if (sortMode === "VOLUME") list.sort((a, b) => b.total - a.total || b.perc - a.perc);
-      else if (sortMode === "ADESAO_DESC") list.sort((a, b) => b.perc - a.perc || b.concluidos - a.concluidos);
-      else if (sortMode === "PENDENTES_DESC") list.sort((a, b) => b.pendentes - a.pendentes);
-
-      if (list.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-400">Nenhuma unidade para exibir.</div>`;
-        return;
-      }
-
-      const selectedUnidade = document.getElementById("filterUnidade").value;
-      container.innerHTML = list.map(u => {
-        const isSelected = selectedUnidade === u.unidade;
-        const badgeColor = u.perc === 100 ? "bg-emerald-100 text-emerald-800 border-emerald-200" : u.perc > 0 ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-slate-100 text-slate-600 border-slate-200";
-        return `
-          <div onclick="selectUnidadeCard('${u.unidade.replace(/'/g, "\\'")}')" class="p-3.5 rounded-xl border transition-all cursor-pointer ${isSelected ? "bg-orange-50/70 border-orange-500 ring-2 ring-orange-500/20" : "bg-slate-50/70 hover:bg-slate-100/80 border-slate-200/80"}">
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded bg-slate-800 text-white">${u.uf}</span>
-                  <h4 class="text-xs font-bold text-slate-900 truncate" title="${u.unidade}">${u.unidade}</h4>
-                </div>
-                <p class="text-[11px] text-slate-500 truncate mt-0.5">${u.filial}</p>
-              </div>
-              <span class="px-2 py-0.5 text-[11px] font-extrabold rounded-lg border shrink-0 ${badgeColor}">${u.perc.toFixed(0)}%</span>
+      container.innerHTML = list.map(u => `
+        <div onclick="selectUnidadeCard('${u.unidade.replace(/'/g, "\\'")}')" class="p-3.5 rounded-xl border bg-slate-50 hover:bg-slate-100 border-slate-200 cursor-pointer">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-800 text-white">${u.uf}</span><h4 class="text-xs font-bold truncate">${u.unidade}</h4></div>
+              <p class="text-[11px] text-slate-500 truncate mt-0.5">${u.filial}</p>
             </div>
-            <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2.5 overflow-hidden">
-              <div class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: ${u.perc}%"></div>
-            </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2">
-              <span><strong class="text-emerald-700">${u.concluidos}</strong> concluído(s)</span>
-              <span><strong class="text-orange-600">${u.pendentes}</strong> pendente(s)</span>
-              <span class="font-semibold text-slate-700">Total: ${u.total}</span>
-            </div>
-          </div>`;
-      }).join("");
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-slate-200">${u.perc.toFixed(0)}%</span>
+          </div>
+          <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${u.perc}%"></div></div>
+          <div class="flex justify-between text-[11px] text-slate-500 mt-2"><span><strong class="text-emerald-700">${u.c}</strong> conc.</span><span><strong class="text-orange-600">${u.p}</strong> pend.</span><span>Total: ${u.total}</span></div>
+        </div>`).join("");
     }
 
-    function selectUnidadeCard(unidadeName) {
+    function selectUnidadeCard(name) {
       const sel = document.getElementById("filterUnidade");
-      if (sel.value === unidadeName) sel.value = "ALL";
-      else { populateUnidadeDropdown(); sel.value = unidadeName; }
+      sel.value = sel.value === name ? "ALL" : name;
       applyFilters();
     }
 
-    function sortTableBy(column) {
-      if (currentSortColumn === column) currentSortAsc = !currentSortAsc;
-      else { currentSortColumn = column; currentSortAsc = true; }
+    function sortTableBy(col) {
+      if (currentSortColumn === col) currentSortAsc = !currentSortAsc;
+      else { currentSortColumn = col; currentSortAsc = true; }
       renderTable();
     }
 
     function renderTable() {
       const tbody = document.getElementById("professionalsTableBody");
-      const emptyState = document.getElementById("tableEmptyState");
       document.getElementById("tableCountBadge").textContent = filteredDataset.length;
-
-      if (filteredDataset.length === 0) {
+      if (!filteredDataset.length) {
         tbody.innerHTML = "";
-        emptyState.classList.remove("hidden");
+        document.getElementById("tableEmptyState").classList.remove("hidden");
         return;
       }
-      emptyState.classList.add("hidden");
-
+      document.getElementById("tableEmptyState").classList.add("hidden");
       const sorted = [...filteredDataset].sort((a, b) => {
-        const valA = (a[currentSortColumn] || "").toString().toUpperCase();
-        const valB = (b[currentSortColumn] || "").toString().toUpperCase();
-        if (valA < valB) return currentSortAsc ? -1 : 1;
-        if (valA > valB) return currentSortAsc ? 1 : -1;
-        return 0;
+        const va = String(a[currentSortColumn] || "").toUpperCase();
+        const vb = String(b[currentSortColumn] || "").toUpperCase();
+        return va < vb ? (currentSortAsc ? -1 : 1) : va > vb ? (currentSortAsc ? 1 : -1) : 0;
       });
-
-      tbody.innerHTML = sorted.map((row) => {
-        const isConcluido = row["STATUS TREINAMENTO"] === "CONCLUIDO";
-        const isHema = row.Especialidades === "HEMATOLOGIA";
-        const specBadge = isHema
-          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><i class="fa-solid fa-droplet text-[10px]"></i> HEMATOLOGIA</span>`
-          : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="fa-solid fa-heart-pulse text-[10px]"></i> ARRITMOLOGIA</span>`;
-        const statusBadge = isConcluido
-          ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300"><i class="fa-solid fa-circle-check text-emerald-600"></i> CONCLUÍDO</span>`
-          : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300"><i class="fa-solid fa-clock text-amber-600"></i> PENDENTE</span>`;
-
-        return `
-          <tr class="hover:bg-slate-50/90 transition-colors">
-            <td class="py-3 px-4 font-extrabold text-slate-800 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs">${row.UF || "-"}</span></td>
-            <td class="py-3 px-4 font-medium text-slate-600 whitespace-nowrap">${row.Filial || "-"}</td>
-            <td class="py-3 px-4 font-semibold text-slate-800">${row.Unidade || "-"}</td>
-            <td class="py-3 px-4 whitespace-nowrap">${specBadge}</td>
-            <td class="py-3 px-4 font-bold text-slate-900">
-              <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center text-[11px] font-extrabold shrink-0">${getInitials(row.Profissional)}</div>
-                <span>${row.Profissional || "-"}</span>
-              </div>
-            </td>
-            <td class="py-3 px-4 text-center whitespace-nowrap">${statusBadge}</td>
-          </tr>`;
-      }).join("");
+      tbody.innerHTML = sorted.map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-4 font-bold">${r.UF || "-"}</td>
+          <td class="py-3 px-4 text-slate-600">${r.Filial || "-"}</td>
+          <td class="py-3 px-4 font-semibold">${r.Unidade || "-"}</td>
+          <td class="py-3 px-4">${r.Especialidades}</td>
+          <td class="py-3 px-4 font-bold">${r.Profissional || "-"}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="px-3 py-1 rounded-full text-xs font-bold ${r["STATUS TREINAMENTO"] === "CONCLUIDO" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}">
+              ${r["STATUS TREINAMENTO"] === "CONCLUIDO" ? "CONCLUÍDO" : "PENDENTE"}
+            </span>
+          </td>
+        </tr>`).join("");
     }
 
-    function getInitials(name) {
-      if (!name) return "?";
-      const parts = name.trim().split(/\s+/);
-      return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
-    // MODAL & ADMIN
     function openAdminModal() {
       document.getElementById("adminModal").classList.remove("hidden");
       document.getElementById("passwordErrorMsg").classList.add("hidden");
       if (isAdminUnlocked) {
-        showUnlockedAdminView();
+        document.getElementById("adminLockView").classList.add("hidden");
+        document.getElementById("adminUnlockedView").classList.remove("hidden");
       } else {
         document.getElementById("adminLockView").classList.remove("hidden");
         document.getElementById("adminUnlockedView").classList.add("hidden");
@@ -1008,95 +669,55 @@
 
     function closeAdminModal() { document.getElementById("adminModal").classList.add("hidden"); }
 
-    function togglePasswordVisibility() {
-      const input = document.getElementById("adminPasswordInput");
-      const icon = document.getElementById("eyeIcon");
-      if (input.type === "password") { input.type = "text"; icon.className = "fa-regular fa-eye-slash"; }
-      else { input.type = "password"; icon.className = "fa-regular fa-eye"; }
-    }
-
     function verifyAdminPassword() {
       const typed = document.getElementById("adminPasswordInput").value;
-      if (encodeToken(typed) === getAdminToken()) {
+      if (encodeToken(typed) === ADMIN_TOKEN) {
         isAdminUnlocked = true;
         document.getElementById("adminPasswordInput").value = "";
-        document.getElementById("passwordErrorMsg").classList.add("hidden");
         document.getElementById("lockIconHeader").className = "fa-solid fa-lock-open text-xs";
-        showUnlockedAdminView();
-        showToast("Acesso liberado! Agora você pode enviar a planilha atualizada.", "success");
+        document.getElementById("adminLockView").classList.add("hidden");
+        document.getElementById("adminUnlockedView").classList.remove("hidden");
+        showToast("Acesso liberado!", "success");
       } else {
         document.getElementById("passwordErrorMsg").classList.remove("hidden");
       }
     }
 
-    function showUnlockedAdminView() {
-      document.getElementById("adminLockView").classList.add("hidden");
-      document.getElementById("adminUnlockedView").classList.remove("hidden");
-    }
-
-    function lockAdminSession() {
-      isAdminUnlocked = false;
-      document.getElementById("lockIconHeader").className = "fa-solid fa-lock text-xs";
-      document.getElementById("adminUnlockedView").classList.add("hidden");
-      document.getElementById("adminLockView").classList.remove("hidden");
-      showToast("Sessão de administrador bloqueada.", "info");
-    }
-
-    function togglePasswordChangeSection() { document.getElementById("changePasswordBox").classList.toggle("hidden"); }
-
-    function saveNewAdminPassword() {
-      const newPass = (document.getElementById("newAdminPasswordInput").value || "").trim();
-      if (newPass.length < 4) { showToast("A nova senha deve ter pelo menos 4 caracteres.", "error"); return; }
-      const encoded = encodeToken(newPass);
-      DEFAULT_ADMIN_TOKEN = encoded;
-      try { localStorage.setItem(STORAGE_KEY_PASS, encoded); } catch (e) {}
-      document.getElementById("newAdminPasswordInput").value = "";
-      document.getElementById("changePasswordBox").classList.add("hidden");
-      showToast("Nova senha salva com sucesso!", "success");
-    }
-
-    function handleDragOver(e) { e.preventDefault(); e.stopPropagation(); document.getElementById("excelDropzone").classList.add("dropzone-active"); }
-    function handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); document.getElementById("excelDropzone").classList.remove("dropzone-active"); }
-    function handleFileDrop(e) {
-      e.preventDefault(); e.stopPropagation();
-      document.getElementById("excelDropzone").classList.remove("dropzone-active");
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) processExcelFile(e.dataTransfer.files[0]);
-    }
-    function handleFileSelect(e) {
-      if (e.target.files && e.target.files.length > 0) { processExcelFile(e.target.files[0]); e.target.value = ""; }
-    }
+    function handleDragOver(e) { e.preventDefault(); document.getElementById("excelDropzone").classList.add("dropzone-active"); }
+    function handleDragLeave(e) { e.preventDefault(); document.getElementById("excelDropzone").classList.remove("dropzone-active"); }
+    function handleFileDrop(e) { e.preventDefault(); document.getElementById("excelDropzone").classList.remove("dropzone-active"); if (e.dataTransfer.files.length) processExcelFile(e.dataTransfer.files[0]); }
+    function handleFileSelect(e) { if (e.target.files.length) { processExcelFile(e.target.files[0]); e.target.value = ""; } }
 
     function processExcelFile(file) {
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = async (evt) => {
         try {
-          const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: "array" });
-          let targetSheetName = workbook.SheetNames.find(name => name.trim().toUpperCase().includes("ACOMPANHAMENTO"));
-          if (!targetSheetName) {
-            for (const sName of workbook.SheetNames) {
-              const rowsPreview = XLSX.utils.sheet_to_json(workbook.Sheets[sName], { defval: "" });
-              if (rowsPreview.length > 0) {
-                const keysUpper = Object.keys(rowsPreview[0]).map(k => k.trim().toUpperCase());
-                if (keysUpper.includes("UF") && keysUpper.some(k => k.includes("PROFISSIONAL"))) { targetSheetName = sName; break; }
-              }
-            }
-          }
-          if (!targetSheetName) targetSheetName = workbook.SheetNames[1] || workbook.SheetNames[0];
+          const wb = XLSX.read(new Uint8Array(evt.target.result), { type: "array" });
+          let sheet = wb.SheetNames.find(n => n.toUpperCase().includes("ACOMPANHAMENTO")) || wb.SheetNames[0];
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheet], { defval: "" });
+          const records = rows.map(row => {
+            const m = {};
+            Object.keys(row).forEach(k => m[k.trim().toUpperCase()] = row[k]);
+            const uf = String(m["UF"] || "").trim().toUpperCase();
+            const prof = String(m["PROFISSIONAL"] || m["MEDICO"] || m["MÉDICO"] || "").trim().toUpperCase();
+            const uni = String(m["UNIDADE"] || m["UNIDADES"] || "").trim().toUpperCase();
+            if (!uf && !prof && !uni) return null;
+            let esp = String(m["ESPECIALIDADES"] || m["ESPECIALIDADE"] || "").trim().toUpperCase();
+            esp = esp.includes("ARRITMO") ? "ARRITMOLOGIA" : "HEMATOLOGIA";
+            const st = String(m["STATUS TREINAMENTO"] || m["STATUS"] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            const finalSt = (st.includes("CONCLUIDO") || st.includes("REALIZADO") || st === "OK" || st === "SIM") ? "CONCLUIDO" : "PENDENTE";
+            return { "UF": uf, "Filial": String(m["FILIAL"] || "").trim().toUpperCase(), "Unidade": uni, "Especialidades": esp, "Profissional": prof, "STATUS TREINAMENTO": finalSt };
+          }).filter(Boolean);
 
-          const rawJson = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheetName], { defval: "" });
-          const normalizedRecords = normalizeSpreadsheetRows(rawJson);
-          if (normalizedRecords.length === 0) { showToast("Não foram encontrados registros válidos na aba ACOMPANHAMENTO.", "error"); return; }
+          if (!records.length) { showToast("Nenhum registro válido encontrado.", "error"); return; }
 
-          rawDataset = normalizedRecords;
           const nowStr = new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-          const metaLabel = `Atualizado em ${nowStr} (${normalizedRecords.length} vínculos)`;
-          EMBEDDED_LAST_UPDATE = metaLabel;
+          const metaLabel = `Atualizado em ${nowStr} (${records.length} vínculos)`;
 
-          try {
-            localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(rawDataset));
-            localStorage.setItem(STORAGE_KEY_META, metaLabel);
-          } catch (e) {}
+          showToast("Salvando no Supabase...", "info");
+          await saveDatasetToSupabase(records, metaLabel);
 
+          rawDataset = records;
           document.getElementById("lastUpdatedText").textContent = metaLabel;
           populateUFDropdown();
           populateFilialDropdown();
@@ -1104,110 +725,33 @@
           applyFilters();
 
           document.getElementById("uploadFeedbackBox").classList.remove("hidden");
-          document.getElementById("uploadFileName").innerHTML = `<i class="fa-solid fa-file-circle-check mr-1.5 text-emerald-600"></i>${file.name} (Aba: ${targetSheetName})`;
-          document.getElementById("uploadRecordCount").textContent = `${normalizedRecords.length} registros`;
-          showToast(`Planilha "${file.name}" importada com sucesso! (${normalizedRecords.length} registros)`, "success");
+          document.getElementById("uploadFileName").textContent = file.name;
+          document.getElementById("uploadRecordCount").textContent = `${records.length} registros`;
+          showToast("Atualizado online para todos!", "success");
         } catch (err) {
-          showToast("Erro ao ler o arquivo Excel. Verifique se é um arquivo .xlsx válido.", "error");
+          console.error(err);
+          showToast("Erro ao salvar no Supabase. Verifique o Console (F12).", "error");
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    function normalizeSpreadsheetRows(rows) {
-      const cleaned = [];
-      rows.forEach(row => {
-        const keyMap = {};
-        Object.keys(row).forEach(k => { keyMap[k.trim().toUpperCase()] = row[k]; });
-        const uf = String(keyMap["UF"] || "").trim().toUpperCase();
-        const filial = String(keyMap["FILIAL"] || "").trim().toUpperCase();
-        const unidade = String(keyMap["UNIDADE"] || keyMap["UNIDADES"] || "").trim().toUpperCase();
-        let especialidade = String(keyMap["ESPECIALIDADES"] || keyMap["ESPECIALIDADE"] || "").trim().toUpperCase();
-        const profissional = String(keyMap["PROFISSIONAL"] || keyMap["MEDICO"] || keyMap["MÉDICO"] || "").trim().toUpperCase();
-        let statusRaw = String(keyMap["STATUS TREINAMENTO"] || keyMap["STATUS"] || keyMap["SITUAÇÃO"] || "").trim().toUpperCase();
-
-        if (!uf && !profissional && !unidade) return;
-        if (especialidade.includes("HEMATO")) especialidade = "HEMATOLOGIA";
-        else if (especialidade.includes("ARRITMO")) especialidade = "ARRITMOLOGIA";
-
-        const statusNormalized = statusRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const finalStatus = (statusNormalized.includes("CONCLUIDO") || statusNormalized.includes("REALIZADO") || statusNormalized === "OK" || statusNormalized === "SIM") ? "CONCLUIDO" : "PENDENTE";
-
-        cleaned.push({ "UF": uf, "Filial": filial, "Unidade": unidade, "Especialidades": especialidade || "HEMATOLOGIA", "Profissional": profissional, "STATUS TREINAMENTO": finalStatus });
-      });
-      return cleaned;
-    }
-
-    function restoreEmbeddedDataset() {
-      try { localStorage.removeItem(STORAGE_KEY_DATA); localStorage.removeItem(STORAGE_KEY_META); } catch (e) {}
-      rawDataset = JSON.parse(JSON.stringify(INITIAL_EMBEDDED_DATA));
-      document.getElementById("lastUpdatedText").textContent = EMBEDDED_LAST_UPDATE;
-      document.getElementById("uploadFeedbackBox").classList.add("hidden");
-      resetAllFilters();
-      showToast("Base original restaurada!", "info");
-    }
-
-    // EXPORTAÇÃO CORRIGIDA (GARANTE MODAL FECHADO E BLOQUEADO)
-    function downloadStandaloneUpdatedHTML() {
-      try {
-        const currentToken = getAdminToken();
-        const currentMeta = document.getElementById("lastUpdatedText").textContent;
-
-        // Clona o documento para limpar o estado visual antes de salvar
-        const clone = document.documentElement.cloneNode(true);
-        clone.querySelector("#adminModal").classList.add("hidden");
-        clone.querySelector("#adminLockView").classList.remove("hidden");
-        clone.querySelector("#adminUnlockedView").classList.add("hidden");
-        clone.querySelector("#uploadFeedbackBox").classList.add("hidden");
-        clone.querySelector("#lockIconHeader").className = "fa-solid fa-lock text-xs";
-        clone.querySelector("#unidadesProgressContainer").innerHTML = "";
-        clone.querySelector("#professionalsTableBody").innerHTML = "";
-        clone.querySelector("#toastContainer").innerHTML = "";
-
-        let fullHtml = "<!DOCTYPE html>\n" + clone.outerHTML;
-        const replacementBlock = `/*__EMBEDDED_DATA_START__*/\n    const INITIAL_EMBEDDED_DATA = ${JSON.stringify(rawDataset)};\n    let DEFAULT_ADMIN_TOKEN = ${JSON.stringify(currentToken)};\n    let EMBEDDED_LAST_UPDATE = ${JSON.stringify(currentMeta)};\n    /*__EMBEDDED_DATA_END__*/`;
-
-        fullHtml = fullHtml.replace(/\/\*__EMBEDDED_DATA_START__\*\/[\s\S]*?\/\*__EMBEDDED_DATA_END__\*\//, replacementBlock);
-
-        const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "index.html";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast("Arquivo index.html atualizado gerado com sucesso!", "success");
-      } catch (err) {
-        showToast("Não foi possível exportar o HTML atualizado.", "error");
-      }
-    }
-
     function exportCurrentFilteredView() {
-      if (filteredDataset.length === 0) { showToast("Não há registros na visão atual para exportar.", "error"); return; }
-      try {
-        const ws = XLSX.utils.json_to_sheet(filteredDataset);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "ACOMPANHAMENTO");
-        XLSX.writeFile(wb, "Acompanhamento_Protocolos_Filtrado.xlsx");
-        showToast(`Exportados ${filteredDataset.length} registros para Excel.`, "success");
-      } catch (err) {
-        showToast("Erro ao exportar planilha.", "error");
-      }
+      if (!filteredDataset.length) return;
+      const ws = XLSX.utils.json_to_sheet(filteredDataset);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "ACOMPANHAMENTO");
+      XLSX.writeFile(wb, "Acompanhamento_Protocolos_Filtrado.xlsx");
     }
 
-    function showToast(message, type = "info") {
-      const container = document.getElementById("toastContainer");
-      const toast = document.createElement("div");
-      let styles = "bg-slate-900 text-white border-slate-700", icon = "fa-circle-info text-blue-400";
-      if (type === "success") { styles = "bg-emerald-900 text-white border-emerald-700"; icon = "fa-circle-check text-emerald-400"; }
-      else if (type === "error") { styles = "bg-rose-900 text-white border-rose-700"; icon = "fa-triangle-exclamation text-rose-300"; }
-
-      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold transition-all duration-300 transform translate-y-0 opacity-100 ${styles}`;
-      toast.innerHTML = `<i class="fa-solid ${icon} text-base shrink-0"></i><span class="flex-1 leading-snug">${message}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => { toast.classList.add("opacity-0", "translate-y-2"); setTimeout(() => toast.remove(), 300); }, 4000);
+    function showToast(msg, type = "info") {
+      const c = document.getElementById("toastContainer");
+      const t = document.createElement("div");
+      const bg = type === "success" ? "bg-emerald-900" : type === "error" ? "bg-rose-900" : "bg-slate-900";
+      t.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl text-white text-xs font-semibold ${bg}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
     }
   </script>
 </body>
